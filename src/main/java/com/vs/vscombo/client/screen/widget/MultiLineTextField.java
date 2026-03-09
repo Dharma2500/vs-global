@@ -156,18 +156,21 @@ public class MultiLineTextField {
         if (!isFocused || !isEditable) return false;
         boolean ctrl = (modifiers & GLFW.GLFW_MOD_CONTROL) != 0;
         
-        // ✅ Ctrl+C/V/X — заглушка (маппинги не позволяют прямой доступ)
+        // ✅ Ctrl+C/V/X/A — заглушка
         if (ctrl) {
-            if (keyCode == GLFW.GLFW_KEY_C || keyCode == GLFW.GLFW_KEY_X || keyCode == GLFW.GLFW_KEY_V || keyCode == GLFW.GLFW_KEY_A) {
-                // TODO: Добавить поддержку буфера обмена через надёжный API
-                System.out.println("[TextField] Clipboard shortcut pressed (not implemented for this mapping)");
+            if (keyCode == GLFW.GLFW_KEY_C || keyCode == GLFW.GLFW_KEY_X || 
+                keyCode == GLFW.GLFW_KEY_V || keyCode == GLFW.GLFW_KEY_A) {
+                System.out.println("[TextField] Clipboard shortcut (not implemented)");
                 return true;
             }
         }
         
-        // ✅ Пробел — разрешаем ввод (возвращаем false, чтобы charTyped обработал)
+        // ✅ Пробел — обрабатываем ПРЯМО ЗДЕСЬ, не передаём дальше
         if (keyCode == GLFW.GLFW_KEY_SPACE) {
-            return false;
+            if (filter.test(text + " ")) {
+                insertText(" ");
+            }
+            return true; // ✅ Важно: возвращаем true, чтобы родитель не обрабатывал!
         }
         
         // Навигация и специальные клавиши
@@ -224,14 +227,19 @@ public class MultiLineTextField {
         // Блокируем клавишу открытия мода (R = 82)
         if (keyCode == 82) return true;
         
-        // ✅ Все остальные клавиши (буквы, цифры) — обрабатываются в charTyped
+        // ✅ Буквы и цифры — обрабатываем в charTyped
         return false;
     }
     
     public boolean charTyped(char codePoint, int modifiers) {
         if (!isFocused || !isEditable) return false;
         
-        // ✅ Разрешаем пробел (32), переносы строк (10, 13) и все printable символы
+        // ✅ Пробел уже обработан в handleKeyPress, пропускаем
+        if (codePoint == 32) {
+            return true;
+        }
+        
+        // ✅ Разрешаем переносы строк (10, 13) и все printable символы >= 32
         if (codePoint < 32 && codePoint != 10 && codePoint != 13) {
             return false;
         }
