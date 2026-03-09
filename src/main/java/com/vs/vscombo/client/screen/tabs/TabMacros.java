@@ -14,6 +14,7 @@ public class TabMacros implements ITab {
     
     private MultiLineTextField textField;
     private CustomButton executeButton;
+    private CustomButton clearButton; // ✅ Новая кнопка Clear
     private CustomButton startButton;
     private CustomButton stopButton;
     private SmallNumberField loopCountField;
@@ -55,12 +56,22 @@ public class TabMacros implements ITab {
             }
         }
         
+        // ✅ Кнопка Execute
         this.executeButton = new CustomButton(
             contentX + TEXT_WIDTH - BUTTON_WIDTH,
             contentY + TEXT_HEIGHT + 10,
             BUTTON_WIDTH, BUTTON_HEIGHT,
             new net.minecraft.util.text.StringTextComponent("Execute"),
             btn -> executeMacros()
+        );
+        
+        // ✅ Новая кнопка Clear (под Execute)
+        this.clearButton = new CustomButton(
+            contentX + TEXT_WIDTH - BUTTON_WIDTH,
+            contentY + TEXT_HEIGHT + 35, // Под Execute (+25 пикселей)
+            BUTTON_WIDTH, BUTTON_HEIGHT,
+            new net.minecraft.util.text.StringTextComponent("Clear"),
+            btn -> clearChat()
         );
         
         this.startButton = new CustomButton(
@@ -111,6 +122,7 @@ public class TabMacros implements ITab {
             textField.render(matrixStack, mouseX, mouseY, partialTicks);
         }
         if (executeButton != null) executeButton.render(matrixStack, mouseX, mouseY, partialTicks);
+        if (clearButton != null) clearButton.render(matrixStack, mouseX, mouseY, partialTicks); // ✅ Рендер Clear
         if (startButton != null) startButton.render(matrixStack, mouseX, mouseY, partialTicks);
         if (stopButton != null) stopButton.render(matrixStack, mouseX, mouseY, partialTicks);
         if (loopCountField != null) loopCountField.render(matrixStack, mouseX, mouseY, partialTicks);
@@ -128,6 +140,7 @@ public class TabMacros implements ITab {
         boolean handled = false;
         if (textField != null) handled = textField.mouseClicked(mouseX, mouseY, button) || handled;
         if (executeButton != null) handled = executeButton.mouseClicked(mouseX, mouseY, button) || handled;
+        if (clearButton != null) handled = clearButton.mouseClicked(mouseX, mouseY, button) || handled; // ✅ Clear
         if (startButton != null) handled = startButton.mouseClicked(mouseX, mouseY, button) || handled;
         if (stopButton != null) handled = stopButton.mouseClicked(mouseX, mouseY, button) || handled;
         if (loopCountField != null) handled = loopCountField.mouseClicked(mouseX, mouseY, button) || handled;
@@ -170,29 +183,35 @@ public class TabMacros implements ITab {
     }
     
     /**
-     * ✅ Универсальная отправка через несколько методов (fallback)
+     * ✅ Отправка команды/сообщения
      */
     private void sendChat(ClientPlayerEntity player, String message) {
         if (player == null || player.connection == null) return;
         
         try {
-            // Пробуем прямой send с пакетом
             player.connection.send(new CChatMessagePacket(message));
         } catch (Exception e) {
             try {
-                // Fallback: через метод chat()
                 java.lang.reflect.Method chatMethod = player.getClass().getMethod("chat", String.class);
                 chatMethod.invoke(player, message);
             } catch (Exception e2) {
                 try {
-                    // Fallback: через sendChatMessage()
                     java.lang.reflect.Method sendMethod = player.getClass().getMethod("sendChatMessage", String.class);
                     sendMethod.invoke(player, message);
                 } catch (Exception e3) {
-                    // Последняя попытка: просто вывод в консоль
                     System.out.println("[Macros] Message: " + message);
                 }
             }
+        }
+    }
+    
+    /**
+     * ✅ Очистка чата (аналог F3+D)
+     */
+    private void clearChat() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.ingameGUI != null && mc.ingameGUI.getChatGUI() != null) {
+            mc.ingameGUI.getChatGUI().clearChatMessages(true);
         }
     }
     
