@@ -1,6 +1,6 @@
 package com.vs.vscombo.client.keybind;
 
-import com.vs.vscombo.VSGlobalMod; // ✅ MOD_ID теперь "vsglobal"
+import com.vs.vscombo.VSGlobalMod;
 import com.vs.vscombo.client.screen.MythicalEquipmentScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
@@ -19,18 +19,19 @@ public class ModKeyBindings {
     
     public static void register() {
         openGuiKey = new KeyBinding(
-            "key.vsglobal.open_gui",              // ✅ Было: key.vscombo.open_gui
+            "key.vsglobal.open_gui",
             InputMappings.Type.KEYSYM,
             GLFW.GLFW_KEY_R,
-            "key.categories.vsglobal"             // ✅ Было: key.categories.vscombo
+            "key.categories.vsglobal"
         );
         ClientRegistry.registerKeyBinding(openGuiKey);
     }
     
     @SubscribeEvent
     public static void onKeyInput(InputEvent.KeyInputEvent event) {
-        if (openGuiKey.isDown() && Minecraft.getInstance().currentScreen == null) {
-            Minecraft.getInstance().displayGuiScreen(new MythicalEquipmentScreen());
+        // ✅ Mojang Mappings 1.16.5: screen + setScreen()
+        if (openGuiKey.isDown() && Minecraft.getInstance().screen == null) {
+            Minecraft.getInstance().setScreen(new MythicalEquipmentScreen());
         }
     }
 }
