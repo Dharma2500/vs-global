@@ -3,7 +3,7 @@ loaderVersion="[36,)"
 license="All rights reserved"
 
 [[mods]]
-modId="vscombo"
+modId="vsglobal"  # ✅ Уникальный ID (было "vscombo")
 version="${file.jarVersion}"
 displayName="VS Global Mod"
 authors="Vitaly_Sokolov"
@@ -11,14 +11,14 @@ description='''
 VS Global Mod - Mythical Equipment
 '''
 
-[[dependencies.vscombo]]
+[[dependencies.vsglobal]]  # ✅ Обновлены все ссылки
     modId="forge"
     mandatory=true
     versionRange="[36,)"
     ordering="NONE"
     side="BOTH"
 
-[[dependencies.vscombo]]
+[[dependencies.vsglobal]]
     modId="minecraft"
     mandatory=true
     versionRange="[1.16.5,1.17)"
