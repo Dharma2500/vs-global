@@ -1,12 +1,11 @@
 package com.vs.vscombo.client.util;
 
 import net.minecraft.client.Minecraft;
-import org.lwjgl.glfw.GLFW;
 
 public class VSMainWindow {
     
     /**
-     * ✅ Очистка чата (аналог F3+D) — симуляция нажатия клавиш
+     * ✅ Очистка чата (аналог F3+D) — универсальный поиск по методу clearMessages
      * Вызов: VSMainWindow.clearChatStatic();
      */
     public static void clearChatStatic() {
@@ -14,149 +13,138 @@ public class VSMainWindow {
             Minecraft mc = Minecraft.getInstance();
             if (mc == null) return;
             
-            // Получаем handle окна
-            long windowHandle = mc.getMainWindow().getHandle();
+            Object chat = findChatObject(mc);
             
-            // 🔍 Пробуем разные комбинации модификаторов для F3+D
-            int[] modifiers = {
-                GLFW.GLFW_MOD_CONTROL,  // Ctrl (иногда F3 мапится на Ctrl)
-                GLFW.GLFW_MOD_ALT,      // Alt
-                GLFW.GLFW_MOD_SHIFT,    // Shift
-                0                       // Без модификатора
-            };
-            
-            for (int mod : modifiers) {
-                try {
-                    // Эмулируем нажатие F3 (клавиша 290)
-                    GLFW.glfwSetKey(windowHandle, GLFW.GLFW_KEY_F3, GLFW.GLFW_PRESS, mod);
-                    GLFW.glfwSetKey(windowHandle, GLFW.GLFW_KEY_F3, GLFW.GLFW_RELEASE, mod);
-                    
-                    // Эмулируем нажатие D
-                    GLFW.glfwSetKey(windowHandle, GLFW.GLFW_KEY_D, GLFW.GLFW_PRESS, mod);
-                    GLFW.glfwSetKey(windowHandle, GLFW.GLFW_KEY_D, GLFW.GLFW_RELEASE, mod);
-                    
-                    // Обрабатываем события
-                    GLFW.glfwPollEvents();
-                    
-                    System.out.println("[Macros] Sent F3+D key press (modifier: " + mod + ")");
-                    break;
-                    
-                } catch (Exception e) {
-                    // Пробуем следующий модификатор
-                }
+            if (chat != null) {
+                invokeClearMethod(chat);
+            } else {
+                System.err.println("[Macros] Could not find chat object with clear method");
             }
             
-            System.out.println("[Macros] ✅ Chat clear command sent!");
-            
         } catch (Exception e) {
-            // Фолбэк: пробуем через рефлексию (на случай если GLFW не сработал)
-            clearChatFallback();
+            System.err.println("[Macros] Clear chat error: " + e.getMessage());
         }
     }
     
     /**
-     * Фолбэк-метод через рефлексию (если GLFW не сработал)
+     * 🔍 Ищет объект чата, у которого есть метод clearMessages или resetChat
      */
-    private static void clearChatFallback() {
-        try {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc == null) return;
-            
-            // Ищем ЛЮБОЕ поле, которое может быть чатом (по методам)
-            Object chat = null;
-            
-            // Проверяем все поля в Minecraft
-            for (java.lang.reflect.Field field : mc.getClass().getDeclaredFields()) {
+    private static Object findChatObject(Minecraft mc) {
+        // 1. Проверяем все поля в Minecraft
+        for (java.lang.reflect.Field field : mc.getClass().getDeclaredFields()) {
+            try {
                 field.setAccessible(true);
                 Object value = field.get(mc);
-                
-                if (value != null) {
-                    // Проверяем, есть ли у объекта метод clearMessages или resetChat
-                    try {
-                        value.getClass().getMethod("clearMessages", boolean.class);
-                        chat = value;
-                        System.out.println("[Macros] Found chat via reflection: " + field.getName());
-                        break;
-                    } catch (NoSuchMethodException e1) {
-                        try {
-                            value.getClass().getMethod("clearMessages");
-                            chat = value;
-                            System.out.println("[Macros] Found chat via reflection: " + field.getName());
-                            break;
-                        } catch (NoSuchMethodException e2) {
-                            try {
-                                value.getClass().getMethod("resetChat");
-                                chat = value;
-                                System.out.println("[Macros] Found chat via reflection: " + field.getName());
-                                break;
-                            } catch (NoSuchMethodException e3) {
-                                // Не подходит
-                            }
-                        }
-                    }
+                if (value != null && hasClearMethod(value)) {
+                    System.out.println("[Macros] Found chat in Minecraft: " + field.getName());
+                    return value;
                 }
-            }
-            
-            // Если не нашли в Minecraft, ищем в IngameGui
-            if (chat == null) {
-                for (java.lang.reflect.Field guiField : mc.getClass().getDeclaredFields()) {
-                    String typeName = guiField.getType().getSimpleName();
-                    if (typeName.equals("IngameGUI") || typeName.equals("IngameGui")) {
-                        guiField.setAccessible(true);
-                        Object gui = guiField.get(mc);
-                        
-                        if (gui != null) {
-                            for (java.lang.reflect.Field field : gui.getClass().getDeclaredFields()) {
+            } catch (Exception ignored) {}
+        }
+        
+        // 2. Проверяем поля в IngameGui (если найдём)
+        for (java.lang.reflect.Field guiField : mc.getClass().getDeclaredFields()) {
+            String typeName = guiField.getType().getSimpleName();
+            if (typeName.equals("IngameGUI") || typeName.equals("IngameGui")) {
+                try {
+                    guiField.setAccessible(true);
+                    Object gui = guiField.get(mc);
+                    if (gui != null) {
+                        for (java.lang.reflect.Field field : gui.getClass().getDeclaredFields()) {
+                            try {
                                 field.setAccessible(true);
                                 Object value = field.get(gui);
-                                
-                                if (value != null) {
-                                    try {
-                                        value.getClass().getMethod("clearMessages", boolean.class);
-                                        chat = value;
-                                        System.out.println("[Macros] Found chat in GUI via reflection: " + field.getName());
-                                        break;
-                                    } catch (NoSuchMethodException e1) {
-                                        try {
-                                            value.getClass().getMethod("clearMessages");
-                                            chat = value;
-                                            System.out.println("[Macros] Found chat in GUI via reflection: " + field.getName());
-                                            break;
-                                        } catch (NoSuchMethodException e2) {
-                                            // Не подходит
-                                        }
-                                    }
+                                if (value != null && hasClearMethod(value)) {
+                                    System.out.println("[Macros] Found chat in IngameGui: " + field.getName());
+                                    return value;
                                 }
-                            }
+                            } catch (Exception ignored) {}
                         }
-                        break;
                     }
-                }
+                } catch (Exception ignored) {}
+                break;
             }
-            
-            // Вызываем метод очистки
-            if (chat != null) {
+        }
+        
+        // 3. Проверяем все поля рекурсивно (на случай кастомных модов)
+        return findChatRecursive(mc, 3);
+    }
+    
+    /**
+     * 🔁 Рекурсивный поиск объекта с методом clearMessages
+     */
+    private static Object findChatRecursive(Object obj, int depth) {
+        if (depth <= 0 || obj == null) return null;
+        
+        try {
+            for (java.lang.reflect.Field field : obj.getClass().getDeclaredFields()) {
                 try {
-                    java.lang.reflect.Method m = chat.getClass().getMethod("clearMessages", boolean.class);
-                    m.invoke(chat, true);
-                } catch (NoSuchMethodException e) {
-                    try {
-                        java.lang.reflect.Method m = chat.getClass().getMethod("clearMessages");
-                        m.invoke(chat);
-                    } catch (NoSuchMethodException e2) {
-                        try {
-                            java.lang.reflect.Method m = chat.getClass().getMethod("resetChat");
-                            m.invoke(chat);
-                        } catch (NoSuchMethodException e3) {
-                            System.err.println("[Macros] Could not find clear method");
+                    field.setAccessible(true);
+                    Object value = field.get(obj);
+                    if (value != null) {
+                        if (hasClearMethod(value)) {
+                            return value;
                         }
+                        // Рекурсивный поиск вложенных объектов
+                        Object found = findChatRecursive(value, depth - 1);
+                        if (found != null) return found;
                     }
-                }
-                System.out.println("[Macros] ✅ Chat cleared via reflection!");
+                } catch (Exception ignored) {}
             }
-            
-        } catch (Exception e) {
-            System.err.println("[Macros] Fallback clear chat error: " + e.getMessage());
+        } catch (Exception ignored) {}
+        return null;
+    }
+    
+    /**
+     * ✅ Проверяет, есть ли у объекта метод clearMessages или resetChat
+     */
+    private static boolean hasClearMethod(Object obj) {
+        if (obj == null) return false;
+        Class<?> clazz = obj.getClass();
+        
+        try {
+            clazz.getMethod("clearMessages", boolean.class);
+            return true;
+        } catch (NoSuchMethodException e1) {
+            try {
+                clazz.getMethod("clearMessages");
+                return true;
+            } catch (NoSuchMethodException e2) {
+                try {
+                    clazz.getMethod("resetChat");
+                    return true;
+                } catch (NoSuchMethodException e3) {
+                    return false;
+                }
+            }
+        }
+    }
+    
+    /**
+     * ✅ Вызывает метод очистки чата
+     */
+    private static void invokeClearMethod(Object chat) {
+        try {
+            java.lang.reflect.Method m = chat.getClass().getMethod("clearMessages", boolean.class);
+            m.invoke(chat, true); // true = очистить всё
+            System.out.println("[Macros] ✅ Chat cleared via clearMessages(true)!");
+            return;
+        } catch (Exception e1) {
+            try {
+                java.lang.reflect.Method m = chat.getClass().getMethod("clearMessages");
+                m.invoke(chat);
+                System.out.println("[Macros] ✅ Chat cleared via clearMessages()!");
+                return;
+            } catch (Exception e2) {
+                try {
+                    java.lang.reflect.Method m = chat.getClass().getMethod("resetChat");
+                    m.invoke(chat);
+                    System.out.println("[Macros] ✅ Chat cleared via resetChat()!");
+                    return;
+                } catch (Exception e3) {
+                    System.err.println("[Macros] Could not invoke clear method");
+                }
+            }
         }
     }
 }
