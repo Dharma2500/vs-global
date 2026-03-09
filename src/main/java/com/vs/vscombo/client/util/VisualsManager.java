@@ -6,6 +6,7 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 
 public class VisualsManager {
@@ -54,17 +55,17 @@ public class VisualsManager {
         // ✅ Создаём временный предмет тотем для анимации
         ItemStack totem = new ItemStack(Items.TOTEM_OF_UNDYING);
         
-        // ✅ Проигрываем звук тотема (правильное имя для 1.16.5)
+        // ✅ Проигрываем звук тотема (с проверкой существования)
         try {
-            player.playSound(SoundEvents.ITEM_TOTEM_USE, 1.0f, 1.0f);
+            // Моппинги 1.16.5: SoundEvents.ITEM_TOTEM_USE
+            player.playSound(SoundEvents.ITEM_TOTEM_USE, SoundCategory.PLAYERS, 1.0f, 1.0f);
         } catch (Exception e) {
-            // Если звук не найден, пропускаем
-            System.out.println("[Visuals] Totem sound not available");
+            // Если звук не найден - пропускаем
+            System.out.println("[Visuals] Totem sound not available in this mapping");
         }
         
-        // ✅ Отправляем частицы тотема
-        // ✅ Правильный доступ к миру в 1.16.5: mc.world
-        ClientWorld world = mc.world;
+        // ✅ Получаем мир через игрока (более надёжно)
+        ClientWorld world = player.world;
         if (world != null && lastBrokenBlock != null) {
             double x = lastBrokenBlock.getX() + 0.5;
             double y = lastBrokenBlock.getY() + 0.5;
