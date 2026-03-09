@@ -177,8 +177,8 @@ public class TabMacros implements ITab {
         for (String line : lines) {
             line = line.trim();
             if (!line.isEmpty()) {
-                // ✅ Отправляем через NetworkManager
-                mc.player.connection.getNetworkManager().sendPacket(new CChatMessagePacket(line));
+                // ✅ Mojang 1.16.5: send() вместо sendPacket()
+                mc.player.connection.send(new CChatMessagePacket(line));
             }
         }
     }
@@ -218,8 +218,8 @@ public class TabMacros implements ITab {
                         if (!line.isEmpty()) {
                             Minecraft mc = Minecraft.getInstance();
                             if (mc.player != null && mc.player.connection != null) {
-                                // ✅ Отправляем через NetworkManager
-                                mc.player.connection.getNetworkManager().sendPacket(new CChatMessagePacket(line));
+                                // ✅ Mojang 1.16.5: send() вместо sendPacket()
+                                mc.player.connection.send(new CChatMessagePacket(line));
                             }
                         }
                     }
