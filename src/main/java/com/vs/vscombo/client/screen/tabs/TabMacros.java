@@ -4,7 +4,6 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.vs.vscombo.client.screen.widget.CustomButton;
 import com.vs.vscombo.client.screen.widget.MultiLineTextField;
 import com.vs.vscombo.client.screen.widget.SmallNumberField;
-import com.vs.vscombo.client.util.VSMainWindow;
 import com.vs.vscombo.util.MacroStorage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -15,7 +14,6 @@ public class TabMacros implements ITab {
     
     private MultiLineTextField textField;
     private CustomButton executeButton;
-    private CustomButton clearButton;
     private CustomButton startButton;
     private CustomButton stopButton;
     private SmallNumberField loopCountField;
@@ -57,6 +55,7 @@ public class TabMacros implements ITab {
             }
         }
         
+        // ✅ Кнопка Execute
         this.executeButton = new CustomButton(
             contentX + TEXT_WIDTH - BUTTON_WIDTH,
             contentY + TEXT_HEIGHT + 10,
@@ -65,14 +64,7 @@ public class TabMacros implements ITab {
             btn -> executeMacros()
         );
         
-        this.clearButton = new CustomButton(
-            contentX + TEXT_WIDTH - BUTTON_WIDTH,
-            contentY + TEXT_HEIGHT + 35,
-            BUTTON_WIDTH, BUTTON_HEIGHT,
-            new net.minecraft.util.text.StringTextComponent("Clear"),
-            btn -> clearChat()
-        );
-        
+        // ✅ Кнопки Start/Stop
         this.startButton = new CustomButton(
             contentX,
             contentY + TEXT_HEIGHT + 10,
@@ -90,6 +82,7 @@ public class TabMacros implements ITab {
         );
         this.stopButton.active = false;
         
+        // ✅ Поля для чисел
         this.loopCountField = new SmallNumberField(
             font,
             contentX + 110,
@@ -121,7 +114,6 @@ public class TabMacros implements ITab {
             textField.render(matrixStack, mouseX, mouseY, partialTicks);
         }
         if (executeButton != null) executeButton.render(matrixStack, mouseX, mouseY, partialTicks);
-        if (clearButton != null) clearButton.render(matrixStack, mouseX, mouseY, partialTicks);
         if (startButton != null) startButton.render(matrixStack, mouseX, mouseY, partialTicks);
         if (stopButton != null) stopButton.render(matrixStack, mouseX, mouseY, partialTicks);
         if (loopCountField != null) loopCountField.render(matrixStack, mouseX, mouseY, partialTicks);
@@ -139,7 +131,6 @@ public class TabMacros implements ITab {
         boolean handled = false;
         if (textField != null) handled = textField.mouseClicked(mouseX, mouseY, button) || handled;
         if (executeButton != null) handled = executeButton.mouseClicked(mouseX, mouseY, button) || handled;
-        if (clearButton != null) handled = clearButton.mouseClicked(mouseX, mouseY, button) || handled;
         if (startButton != null) handled = startButton.mouseClicked(mouseX, mouseY, button) || handled;
         if (stopButton != null) handled = stopButton.mouseClicked(mouseX, mouseY, button) || handled;
         if (loopCountField != null) handled = loopCountField.mouseClicked(mouseX, mouseY, button) || handled;
@@ -201,12 +192,7 @@ public class TabMacros implements ITab {
         }
     }
     
-    /**
-     * ✅ Очистка чата через утилитный метод
-     */
-    private void clearChat() {
-        VSMainWindow.clearChatStatic();
-    }
+    // ❌ Метод clearChat() удалён вместе с кнопкой Clear
     
     private void executeMacros() {
         if (textField == null) return;
