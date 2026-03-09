@@ -2,9 +2,9 @@ package com.vs.vscombo.client.keybind;
 
 import com.vs.vscombo.VSGlobalMod;
 import com.vs.vscombo.client.screen.MythicalEquipmentScreen;
-import net.minecraft.client.Minecraft; // ✅ Добавлен импорт
+import net.minecraft.client.Minecraft; // ✅ Импорт
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.client.util.InputMappings; // ✅ InputMappings.Input
+import net.minecraft.client.util.InputMappings;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -20,7 +20,7 @@ public class ModKeyBindings {
         openGuiKey = new KeyBinding(
             "key.vscombo.open_gui",
             InputMappings.Type.KEYSYM,
-            InputMappings.Input.KEY_R, // ✅ 1.16.5: Input.KEY_R
+            InputMappings.KEY_R, // ✅ 1.16.5: константа прямо в InputMappings
             "key.categories.vscombo"
         );
         ClientRegistry.registerKeyBinding(openGuiKey);
@@ -28,9 +28,10 @@ public class ModKeyBindings {
     
     @SubscribeEvent
     public static void onKeyInput(InputEvent.KeyInputEvent event) {
-        // ✅ 1.16.5: статический метод KeyBinding.isPressed()
-        if (KeyBinding.isPressed(openGuiKey)) {
-            Minecraft.getInstance().displayGuiScreen(new MythicalEquipmentScreen());
+        // ✅ 1.16.5: инстанс-метод isPressed()
+        if (openGuiKey.isPressed()) {
+            // ✅ 1.16.5: метод setScreen(), а не displayGuiScreen
+            Minecraft.getInstance().setScreen(new MythicalEquipmentScreen());
         }
     }
 }
