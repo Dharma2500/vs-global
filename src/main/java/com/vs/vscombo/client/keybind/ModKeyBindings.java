@@ -2,8 +2,9 @@ package com.vs.vscombo.client.keybind;
 
 import com.vs.vscombo.VSGlobalMod;
 import com.vs.vscombo.client.screen.MythicalEquipmentScreen;
+import net.minecraft.client.Minecraft; // ✅ Добавлен импорт
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.client.util.InputMappings;
+import net.minecraft.client.util.InputMappings; // ✅ InputMappings.Input
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -19,7 +20,7 @@ public class ModKeyBindings {
         openGuiKey = new KeyBinding(
             "key.vscombo.open_gui",
             InputMappings.Type.KEYSYM,
-            InputMappings.KEY_R,
+            InputMappings.Input.KEY_R, // ✅ 1.16.5: Input.KEY_R
             "key.categories.vscombo"
         );
         ClientRegistry.registerKeyBinding(openGuiKey);
@@ -27,7 +28,8 @@ public class ModKeyBindings {
     
     @SubscribeEvent
     public static void onKeyInput(InputEvent.KeyInputEvent event) {
-        if (openGuiKey.isPressed()) {
+        // ✅ 1.16.5: статический метод KeyBinding.isPressed()
+        if (KeyBinding.isPressed(openGuiKey)) {
             Minecraft.getInstance().displayGuiScreen(new MythicalEquipmentScreen());
         }
     }
