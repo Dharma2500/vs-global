@@ -75,15 +75,17 @@ public class MythicalEquipmentScreen extends Screen {
         
         // Фон
         RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        this.minecraft.getTextureManager().bindTexture(BACKGROUND); // ✅ 1.16.5
+        // ✅ 1.16.5: bind() вместо bindTexture()
+        this.minecraft.getTextureManager().bind(BACKGROUND);
         this.blit(matrixStack, guiLeft, guiTop, 0, 0, Constants.GUI_WIDTH, Constants.GUI_HEIGHT);
         
         // Заголовок
         String title = "Created by Vitaly_Sokolov";
-        int titleWidth = this.font.getStringWidth(title); // ✅ 1.16.5
-        this.font.drawString(matrixStack, title, 
+        // ✅ 1.16.5: width() вместо getStringWidth()
+        int titleWidth = this.font.width(title);
+        this.font.draw(matrixStack, title, 
             (float)(guiLeft + (Constants.GUI_WIDTH - titleWidth) / 2), 
-            (float)(guiTop + 8), 0xFFFFFF); // ✅ float координаты
+            (float)(guiTop + 8), 0xFFFFFF);
         
         // Контент вкладки
         if (currentTab != null) {
