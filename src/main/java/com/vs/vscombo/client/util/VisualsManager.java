@@ -41,7 +41,7 @@ public class VisualsManager {
     }
     
     /**
-     * ✅ Воспроизводит анимацию тотема (безопасная версия для любых маппингов)
+     * ✅ Воспроизводит анимацию тотема (полностью через рефлексию)
      */
     private static void playTotemAnimation() {
         Minecraft mc = Minecraft.getInstance();
@@ -49,10 +49,10 @@ public class VisualsManager {
         
         if (player == null) return;
         
-        // ✅ Создаём предмет тотем (для возможного использования)
+        // ✅ Создаём предмет тотем
         ItemStack totem = new ItemStack(Items.TOTEM_OF_UNDYING);
         
-        // ✅ Звук тотема (через рефлексию для совместимости)
+        // ✅ Звук тотема (через рефлексию)
         try {
             Class<?> soundEventsClass = Class.forName("net.minecraft.util.SoundEvents");
             java.lang.reflect.Field totemField = null;
@@ -91,26 +91,34 @@ public class VisualsManager {
                 }
             }
         } catch (Exception e) {
-            // Звук опционален - пропускаем если не найден
+            // Звук опционален
         }
         
-        // ✅ Частицы тотема (через рефлексию для совместимости)
+        // ✅ Частицы тотема (через рефлексию)
         try {
-            // Получаем мир через игрока (более надёжно чем mc.world)
-            Object world = player.world;
+            // 🔍 Получаем мир через рефлексию (обход доступа к полю world)
+            Object world = null;
+            for (java.lang.reflect.Field field : player.getClass().getDeclaredFields()) {
+                String typeName = field.getType().getSimpleName();
+                if (typeName.equals("ClientWorld") || typeName.equals("World")) {
+                    field.setAccessible(true);
+                    world = field.get(player);
+                    break;
+                }
+            }
             
             if (world != null && lastBrokenBlock != null) {
                 double x = lastBrokenBlock.getX() + 0.5;
                 double y = lastBrokenBlock.getY() + 0.5;
                 double z = lastBrokenBlock.getZ() + 0.5;
                 
-                // Ищем тип частиц END_ROD через рефлексию
+                // 🔍 Ищем тип частиц через рефлексию
                 Class<?> particleTypesClass = Class.forName("net.minecraft.particles.ParticleTypes");
                 java.lang.reflect.Field endRodField = particleTypesClass.getDeclaredField("END_ROD");
                 endRodField.setAccessible(true);
                 Object endRodParticle = endRodField.get(null);
                 
-                // Добавляем частицы
+                // 🔍 Добавляем частицы через рефлексию
                 for (int i = 0; i < 30; i++) {
                     java.lang.reflect.Method addParticleMethod = world.getClass()
                         .getMethod("addParticle", 
@@ -129,7 +137,7 @@ public class VisualsManager {
                 }
             }
         } catch (Exception e) {
-            // Частицы опциональны - пропускаем если не найдены
+            // Частицы опциональны
             System.out.println("[Visuals] Particles skipped (mapping compatibility)");
         }
         
@@ -137,13 +145,11 @@ public class VisualsManager {
     }
     
     /**
-     * ✅ Проверяет, нужно ли показать анимацию (для рендера)
+     * ✅ Проверяет, нужно ли показать анимацию
      */
     public static boolean shouldShowTotemEffect() {
         if (!blockTotemEnabled) return false;
         if (lastBrokenBlock == null) return false;
-        
-        // Показываем эффект в течение 2 секунд после разрушения
         return (System.currentTimeMillis() - lastBreakTime) < 2000;
     }
     
