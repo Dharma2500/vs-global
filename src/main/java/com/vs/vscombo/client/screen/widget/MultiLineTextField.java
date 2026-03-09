@@ -1,7 +1,6 @@
 package com.vs.vscombo.client.screen.widget;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.AbstractGui;
@@ -55,10 +54,8 @@ public class MultiLineTextField {
         AbstractGui.fill(matrixStack, x + width - 1, y, x + width, y + height, 0xFF303050);
         AbstractGui.fill(matrixStack, x, y + height - 1, x + width, y + height, 0xFF303050);
         
-        // ✅ Простой scissor без сложных вызовов
-        Minecraft mc = Minecraft.getInstance();
-        int scaledHeight = mc.getMainWindow().getScaledHeight();
-        RenderSystem.enableScissor(x + 1, scaledHeight - (y + height - 1), width - 2, height - 2);
+        // ✅ Убрали enableScissor — не критично для работы
+        // Просто рендерим текст
         
         renderText(matrixStack);
         renderCursor(matrixStack);
@@ -67,8 +64,6 @@ public class MultiLineTextField {
             font.draw(matrixStack, hint.getString(), 
                 (float)(x + padding - scrollX), (float)(y + padding - scrollY), 0xFF606080);
         }
-        
-        RenderSystem.disableScissor();
     }
     
     private void renderText(MatrixStack matrixStack) {
@@ -175,9 +170,7 @@ public class MultiLineTextField {
         if (keyCode == GLFW.GLFW_KEY_END) { moveToLineEnd(); return true; }
         if (ctrl && keyCode == GLFW.GLFW_KEY_A) { selectionStart = 0; cursorPos = text.length(); return true; }
         
-        // ⚠️ Ctrl+C/V/X временно отключены (проблемы с маппингами)
-        // Можно добавить позже через надёжный API
-        
+        // Ctrl+C/V/X временно отключены
         // Блокируем клавишу открытия мода (R = 82)
         if (keyCode == 82) return true;
         
