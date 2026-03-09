@@ -6,6 +6,7 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.SoundEvents;
 
 public class VisualsManager {
     
@@ -53,17 +54,23 @@ public class VisualsManager {
         // ✅ Создаём временный предмет тотем для анимации
         ItemStack totem = new ItemStack(Items.TOTEM_OF_UNDYING);
         
-        // ✅ Проигрываем звук тотема
-        player.playSound(net.minecraft.util.SoundEvents.ITEM_TOTEM_USE, 1.0f, 1.0f);
+        // ✅ Проигрываем звук тотема (правильное имя для 1.16.5)
+        try {
+            player.playSound(SoundEvents.ITEM_TOTEM_USE, 1.0f, 1.0f);
+        } catch (Exception e) {
+            // Если звук не найден, пропускаем
+            System.out.println("[Visuals] Totem sound not available");
+        }
         
         // ✅ Отправляем частицы тотема
+        // ✅ Правильный доступ к миру в 1.16.5: mc.world
         ClientWorld world = mc.world;
         if (world != null && lastBrokenBlock != null) {
             double x = lastBrokenBlock.getX() + 0.5;
             double y = lastBrokenBlock.getY() + 0.5;
             double z = lastBrokenBlock.getZ() + 0.5;
             
-            // Частицы тотема
+            // Частицы тотема (END_ROD работает в 1.16.5)
             for (int i = 0; i < 30; i++) {
                 world.addParticle(
                     net.minecraft.particles.ParticleTypes.END_ROD,
