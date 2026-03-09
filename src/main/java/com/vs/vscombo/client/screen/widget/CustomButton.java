@@ -42,14 +42,15 @@ public class CustomButton extends Button {
             textColor = 0xFFFFFFFF; // Белый
         }
         
-        // ✅ Центрируем текст
+        // ✅ Рисуем текст
         FontRenderer font = Minecraft.getInstance().font;
-        String message = this.getMessage().getFormattedText(); // ✅ Mojang Mappings
-        int textWidth = font.width(message); // ✅ Mojang Mappings: width() вместо getStringWidth()
+        // ✅ Mojang Mappings 1.16.5: getString() вместо getFormattedText()
+        String message = this.getMessage().getString();
+        int textWidth = font.width(message);
         int textX = this.x + (this.width - textWidth) / 2;
-        int textY = this.y + (this.height - 9) / 2; // 9 = высота шрифта
+        int textY = this.y + (this.height - 9) / 2;
         
-        // ✅ Рисуем текст (float координаты для Mojang Mappings)
+        // ✅ float координаты для Mojang Mappings
         font.draw(matrixStack, message, (float)textX, (float)textY, textColor);
     }
 }
