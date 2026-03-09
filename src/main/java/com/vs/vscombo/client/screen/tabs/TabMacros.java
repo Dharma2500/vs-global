@@ -32,8 +32,11 @@ public class TabMacros implements ITab {
     private static final int SMALL_FIELD_HEIGHT = 18;
     
     @Override
-    public void init(Minecraft minecraft, int width, int height) {
+    public void init(Minecraft minecraft, int width, int height, int contentX, int contentY) {
         this.font = minecraft.font;
+        this.contentX = contentX;
+        this.contentY = contentY;
+        
         int textX = contentX;
         int textY = contentY;
         
@@ -166,16 +169,12 @@ public class TabMacros implements ITab {
         return false;
     }
     
-    /**
-     * ✅ Универсальная отправка через рефлексию (работает в любых маппингах)
-     */
     private void sendChat(ClientPlayerEntity player, String message) {
         try {
-            // Пытаемся вызвать sendPacket через рефлексию
             java.lang.reflect.Method sendMethod = player.connection.getClass().getMethod("send", net.minecraft.network.IPacket.class);
             sendMethod.invoke(player.connection, new CChatMessagePacket(message));
         } catch (Exception e) {
-            // Fallback: ничего не делаем, если рефлексия не сработала
+            // Fallback
         }
     }
     
