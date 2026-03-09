@@ -36,7 +36,7 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: vs-combo-build
+          name: vs-global-build
           path: build/libs/*.jar
           retention-days: 7
           
