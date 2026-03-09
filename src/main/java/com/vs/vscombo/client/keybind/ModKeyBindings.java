@@ -1,6 +1,6 @@
 package com.vs.vscombo.client.keybind;
 
-import com.vs.vscombo.VSGlobalMod;
+import com.vs.vscombo.VSGlobalMod; // ✅ MOD_ID теперь "vsglobal"
 import com.vs.vscombo.client.screen.MythicalEquipmentScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
@@ -18,21 +18,18 @@ public class ModKeyBindings {
     public static KeyBinding openGuiKey;
     
     public static void register() {
-        // ✅ Регистрация клавиши
         openGuiKey = new KeyBinding(
-            "key.vscombo.open_gui",                    // Translation key
-            InputMappings.Type.KEYSYM,                  // Тип ввода
-            GLFW.GLFW_KEY_R,                            // GLFW код клавиши R
-            "key.categories.vscombo"                    // Категория в настройках
+            "key.vsglobal.open_gui",              // ✅ Было: key.vscombo.open_gui
+            InputMappings.Type.KEYSYM,
+            GLFW.GLFW_KEY_R,
+            "key.categories.vsglobal"             // ✅ Было: key.categories.vscombo
         );
-        ClientRegistry.registerKeyBinding(openGuiKey);  // ✅ Обязательно!
+        ClientRegistry.registerKeyBinding(openGuiKey);
     }
     
     @SubscribeEvent
     public static void onKeyInput(InputEvent.KeyInputEvent event) {
-        // ✅ 1.16.5: isDown() + проверка что экран ещё не открыт
         if (openGuiKey.isDown() && Minecraft.getInstance().currentScreen == null) {
-            // ✅ 1.16.5: displayGuiScreen() вместо setScreen()
             Minecraft.getInstance().displayGuiScreen(new MythicalEquipmentScreen());
         }
     }
