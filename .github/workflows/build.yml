@@ -7,7 +7,6 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
-# Настройки среды для ускорения
 env:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2"
 
@@ -20,30 +19,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ✅ Java 8 обязательна для Forge 1.16.5
+      # ✅ Исправлено: параметр cache удалён
       - name: Set up JDK 8
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '8'
-          # ❌ Отключаем встроенный кэш Java, чтобы не мешал чистой сборке
-          cache: 'none'
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
         
-      # ✅ Агрессивная очистка перед сборкой (как у вас работало быстрее)
+      # ✅ Агрессивная очистка кэша (ваш проверенный метод)
       - name: Clean build environment
         run: |
           rm -rf ~/.gradle/caches/
           rm -rf .gradle/
           ./gradlew clean --no-daemon
         
-      # ✅ Сборка без тестов
       - name: Build with Gradle
         run: ./gradlew build -x test --no-daemon
 
-      # ✅ Загрузка только основного файла мода
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -52,7 +47,6 @@ jobs:
           retention-days: 7
           if-no-files-found: error
           
-      # ✅ Релиз по тегу
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
