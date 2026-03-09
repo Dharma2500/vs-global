@@ -1,6 +1,8 @@
 package com.vs.vscombo.client.keybind;
 
 import com.vs.vscombo.VSGlobalMod;
+import com.vs.vscombo.client.screen.MythicalEquipmentScreen;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
 import net.minecraftforge.api.distmarker.Dist;
@@ -28,10 +30,17 @@ public class ModKeyBindings {
     
     @SubscribeEvent
     public static void onKeyInput(net.minecraftforge.client.event.InputEvent.KeyInputEvent event) {
-        while (openModGui.isPressed()) {
-            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        // ✅ Правильный метод для официальных маппингов: isDown()
+        while (openModGui.isDown()) {
+            Minecraft mc = Minecraft.getInstance();
             if (mc.screen == null) {
-                mc.setScreen(new com.vs.vscombo.client.screen.MythicalEquipmentScreen());
+                mc.setScreen(new MythicalEquipmentScreen());
+                // ✅ Важно: сбрасываем нажатие, чтобы не открывать мод многократно
+                openModGui.setKeyModifierAndCode(
+                    openModGui.getKeyModifier(),
+                    openModGui.getKey()
+                );
+                break;
             }
         }
     }
