@@ -14,7 +14,7 @@ apply plugin: 'maven-publish'
 
 version = '1.0'
 group = 'com.vs.vscombo'
-archivesBaseName = 'vscombo'
+archivesBaseName = 'vs-global'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(8)
 
@@ -99,4 +99,5 @@ publishing {
             url "file:///${project.projectDir}/mcmodsrepo"
         }
     }
+
 }
