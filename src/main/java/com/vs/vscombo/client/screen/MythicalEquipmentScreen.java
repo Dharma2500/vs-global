@@ -80,7 +80,10 @@ public class MythicalEquipmentScreen extends Screen {
         }
         
         if (currentTab != null) {
-            currentTab.init(this.minecraft, this.width, this.height);
+            // ✅ Передаём координаты контента в init вкладки
+            int contentX = guiLeft + SIDEBAR_WIDTH + 15;
+            int contentY = guiTop + 45;
+            currentTab.init(this.minecraft, this.width, this.height, contentX, contentY);
         }
     }
     
@@ -88,7 +91,12 @@ public class MythicalEquipmentScreen extends Screen {
         if (index >= 0 && index < tabs.length) {
             this.currentTab = tabs[index];
             if (currentTab != null) {
-                currentTab.init(this.minecraft, this.width, this.height);
+                // ✅ Вычисляем координаты для switchTab
+                int guiLeft = (this.width - GUI_WIDTH) / 2;
+                int guiTop = (this.height - GUI_HEIGHT) / 2;
+                int contentX = guiLeft + SIDEBAR_WIDTH + 15;
+                int contentY = guiTop + 45;
+                currentTab.init(this.minecraft, this.width, this.height, contentX, contentY);
             }
         }
     }
