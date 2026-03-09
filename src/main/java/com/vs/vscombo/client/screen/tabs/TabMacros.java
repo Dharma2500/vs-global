@@ -7,7 +7,6 @@ import com.vs.vscombo.client.screen.widget.SmallNumberField;
 import com.vs.vscombo.util.MacroStorage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.network.play.client.CChatMessagePacket;
 
 public class TabMacros implements ITab {
     
@@ -165,24 +164,31 @@ public class TabMacros implements ITab {
         return false;
     }
     
+    /**
+     * Отправка макросов на сервер (однократно)
+     * ✅ Использует player.sendChatMessage() — работает в любых маппингах
+     */
     private void executeMacros() {
         if (textField == null) return;
         String text = textField.getText();
         if (text.isEmpty()) return;
         
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.player.connection == null) return;
+        if (mc.player == null) return;
         
         String[] lines = text.split("\n");
         for (String line : lines) {
             line = line.trim();
             if (!line.isEmpty()) {
-                // ✅ Mojang 1.16.5: sendPacket() через connection
-                mc.player.connection.sendPacket(new CChatMessagePacket(line));
+                // ✅ sendChatMessage работает и для команд (/cmd), и для сообщений
+                mc.player.sendChatMessage(line);
             }
         }
     }
     
+    /**
+     * Запуск цикла отправки
+     */
     private void startLoop() {
         if (isRunning || textField == null) return;
         
@@ -217,9 +223,9 @@ public class TabMacros implements ITab {
                         line = line.trim();
                         if (!line.isEmpty()) {
                             Minecraft mc = Minecraft.getInstance();
-                            if (mc.player != null && mc.player.connection != null) {
-                                // ✅ Mojang 1.16.5: sendPacket() через connection
-                                mc.player.connection.sendPacket(new CChatMessagePacket(line));
+                            if (mc.player != null) {
+                                // ✅ sendChatMessage — универсальный способ
+                                mc.player.sendChatMessage(line);
                             }
                         }
                     }
