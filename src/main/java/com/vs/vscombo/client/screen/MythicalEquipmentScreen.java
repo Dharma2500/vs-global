@@ -28,11 +28,7 @@ public class MythicalEquipmentScreen extends Screen {
     public MythicalEquipmentScreen() {
         super(new TranslationTextComponent("gui.vscombo.mythical_equipment"));
         this.tabs = new ITab[]{
-            new Tab1(),
-            new Tab2(),
-            new Tab3(),
-            new Tab4(),
-            new Tab5()
+            new Tab1(), new Tab2(), new Tab3(), new Tab4(), new Tab5()
         };
         this.currentTab = tabs[0];
     }
@@ -44,7 +40,6 @@ public class MythicalEquipmentScreen extends Screen {
         int guiLeft = (this.width - Constants.GUI_WIDTH) / 2;
         int guiTop = (this.height - Constants.GUI_HEIGHT) / 2;
         
-        // Создаем кнопки вкладок
         this.tabButtons = new Button[5];
         for (int i = 0; i < 5; i++) {
             final int tabIndex = i;
@@ -59,7 +54,6 @@ public class MythicalEquipmentScreen extends Screen {
             this.addButton(tabButtons[i]);
         }
         
-        // Инициализируем текущую вкладку
         if (currentTab != null) {
             currentTab.init(this.minecraft, this.width, this.height);
         }
@@ -68,38 +62,34 @@ public class MythicalEquipmentScreen extends Screen {
     private void switchTab(int index) {
         if (index >= 0 && index < tabs.length) {
             this.currentTab = tabs[index];
-            // Обновляем состояние кнопок
             for (int i = 0; i < tabButtons.length; i++) {
                 tabButtons[i].active = (i != index);
             }
-            // Инициализируем новую вкладку
             currentTab.init(this.minecraft, this.width, this.height);
         }
     }
     
     @Override
     public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        // Рендерим фон
         this.renderBackground(matrixStack);
         
         int guiLeft = (this.width - Constants.GUI_WIDTH) / 2;
         int guiTop = (this.height - Constants.GUI_HEIGHT) / 2;
         
-        // Рендерим фон GUI
+        // Фон
         RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        this.minecraft.getTextureManager().bindTexture(BACKGROUND);
+        Minecraft.getInstance().getTextureManager().bindTexture(BACKGROUND);
         this.blit(matrixStack, guiLeft, guiTop, 0, 0, Constants.GUI_WIDTH, Constants.GUI_HEIGHT);
         
-        // Рендерим заголовок
+        // Заголовок
         String title = "Created by Vitaly_Sokolov";
-        int titleWidth = this.font.getStringWidth(title);
+        int titleWidth = this.font.getStringWidth(title); // ✅ 1.16.5 метод
         this.font.drawString(matrixStack, title, 
-            guiLeft + (Constants.GUI_WIDTH - titleWidth) / 2, 
+            guiLeft + (Constants.GUI_WIDTH - titleWidth) / 2f, 
             guiTop + 8, 0xFFFFFF);
         
-        // Рендерим содержимое текущей вкладки
+        // Контент вкладки
         if (currentTab != null) {
-            // Область контента
             fill(matrixStack, 
                 guiLeft + Constants.CONTENT_X, 
                 guiTop + Constants.CONTENT_Y,
@@ -107,11 +97,9 @@ public class MythicalEquipmentScreen extends Screen {
                 guiTop + Constants.CONTENT_Y + Constants.CONTENT_HEIGHT,
                 0xFF333333);
             
-            // Рендерим контент вкладки
             currentTab.render(matrixStack, mouseX, mouseY, partialTicks);
         }
         
-        // Рендерим кнопки и остальной UI
         super.render(matrixStack, mouseX, mouseY, partialTicks);
     }
     
