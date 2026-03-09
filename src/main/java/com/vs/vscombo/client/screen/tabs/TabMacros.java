@@ -1,5 +1,6 @@
 package com.vs.vscombo.client.screen.tabs;
 
+import com.vs.vscombo.client.util.VisualsManager;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.vs.vscombo.client.screen.widget.CustomButton;
 import com.vs.vscombo.client.screen.widget.MultiLineTextField;
