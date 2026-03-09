@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 public class VSMainWindow {
     
     /**
-     * ✅ Очистка чата (аналог F3+D) — с перебором имён полей и отладкой
+     * ✅ Очистка чата (аналог F3+D) — поиск поля по типу IngameGui
      * Вызов: VSMainWindow.clearChatStatic();
      */
     public static void clearChatStatic() {
@@ -13,113 +13,80 @@ public class VSMainWindow {
             Minecraft mc = Minecraft.getInstance();
             if (mc == null) return;
             
-            // 🔍 Пробуем разные возможные имена поля для GUI
+            // 🔍 1. Ищем поле типа IngameGui в классе Minecraft
             Object gui = null;
-            String[] possibleGuiFieldNames = {
-                "gui",              // Mojang Mappings
-                "ingameGUI",        // Forge Mappings  
-                "field_71467_ac",   // Obfuscated name (1.16.5)
-                "f_91014_"          // Mojang hashed name (newer mappings)
-            };
+            java.lang.reflect.Field guiField = null;
             
-            for (String fieldName : possibleGuiFieldNames) {
-                try {
-                    java.lang.reflect.Field guiField = mc.getClass().getDeclaredField(fieldName);
-                    guiField.setAccessible(true);
-                    gui = guiField.get(mc);
-                    if (gui != null) {
-                        System.out.println("[Macros] Found GUI field: " + fieldName);
-                        break;
-                    }
-                } catch (NoSuchFieldException ignored) {
-                    // Пробуем следующее имя
+            for (java.lang.reflect.Field field : mc.getClass().getDeclaredFields()) {
+                String typeName = field.getType().getSimpleName();
+                if (typeName.equals("IngameGUI") || typeName.equals("IngameGui")) {
+                    field.setAccessible(true);
+                    gui = field.get(mc);
+                    guiField = field;
+                    System.out.println("[Macros] Found GUI field by type: " + field.getName() + " (type: " + typeName + ")");
+                    break;
                 }
             }
             
             if (gui == null) {
-                System.err.println("[Macros] Could not find GUI field in Minecraft class");
-                // 🔧 Отладка: выводим все поля класса для диагностики
-                System.err.println("[Macros] Available fields in Minecraft:");
-                for (java.lang.reflect.Field f : mc.getClass().getDeclaredFields()) {
-                    System.err.println("[Macros]   - " + f.getName() + " : " + f.getType().getSimpleName());
-                }
+                System.err.println("[Macros] Could not find IngameGui field in Minecraft class");
                 return;
             }
             
-            // 🔍 Пробуем разные возможные имена поля для чата
+            // 🔍 2. Ищем поле типа ChatGui в классе IngameGui
             Object chat = null;
-            String[] possibleChatFieldNames = {
-                "chat",             // Mojang Mappings
-                "chatGUI",          // Forge Mappings
-                "field_146291_b",   // Obfuscated name (1.16.5)
-                "f_93017_"          // Mojang hashed name
-            };
+            java.lang.reflect.Field chatField = null;
             
-            for (String fieldName : possibleChatFieldNames) {
-                try {
-                    java.lang.reflect.Field chatField = gui.getClass().getDeclaredField(fieldName);
-                    chatField.setAccessible(true);
-                    chat = chatField.get(gui);
-                    if (chat != null) {
-                        System.out.println("[Macros] Found chat field: " + fieldName);
-                        break;
-                    }
-                } catch (NoSuchFieldException ignored) {
-                    // Пробуем следующее имя
+            for (java.lang.reflect.Field field : gui.getClass().getDeclaredFields()) {
+                String typeName = field.getType().getSimpleName();
+                if (typeName.equals("ChatGui") || typeName.equals("ChatScreen")) {
+                    field.setAccessible(true);
+                    chat = field.get(gui);
+                    chatField = field;
+                    System.out.println("[Macros] Found chat field by type: " + field.getName() + " (type: " + typeName + ")");
+                    break;
                 }
             }
             
             if (chat == null) {
-                System.err.println("[Macros] Could not find chat field in GUI class");
-                // 🔧 Отладка: выводим все поля класса GUI
-                System.err.println("[Macros] Available fields in GUI: " + gui.getClass().getName());
-                for (java.lang.reflect.Field f : gui.getClass().getDeclaredFields()) {
-                    System.err.println("[Macros]   - " + f.getName() + " : " + f.getType().getSimpleName());
-                }
+                System.err.println("[Macros] Could not find ChatGui field in IngameGui class");
                 return;
             }
             
-            // 🔍 Пробуем разные возможные имена метода очистки
+            // 🔍 3. Ищем метод очистки (clearMessages, resetChat, и т.д.)
             java.lang.reflect.Method clearMethod = null;
-            String[] possibleMethodNames = {"clearMessages", "resetChat", "clearChatMessages"};
             
-            for (String methodName : possibleMethodNames) {
+            // Пробуем с boolean параметром
+            try {
+                clearMethod = chat.getClass().getMethod("clearMessages", boolean.class);
+                System.out.println("[Macros] Found method: clearMessages(boolean)");
+            } catch (NoSuchMethodException e1) {
                 try {
-                    clearMethod = chat.getClass().getMethod(methodName, boolean.class);
-                    if (clearMethod != null) {
-                        System.out.println("[Macros] Found clear method: " + methodName + "(boolean)");
-                        break;
-                    }
-                } catch (NoSuchMethodException ignored) {
+                    clearMethod = chat.getClass().getMethod("clearMessages");
+                    System.out.println("[Macros] Found method: clearMessages()");
+                } catch (NoSuchMethodException e2) {
                     try {
-                        clearMethod = chat.getClass().getMethod(methodName); // без параметров
-                        if (clearMethod != null) {
-                            System.out.println("[Macros] Found clear method: " + methodName + "()");
-                            break;
+                        clearMethod = chat.getClass().getMethod("resetChat");
+                        System.out.println("[Macros] Found method: resetChat()");
+                    } catch (NoSuchMethodException e3) {
+                        try {
+                            clearMethod = chat.getClass().getMethod("clearChatMessages", boolean.class);
+                            System.out.println("[Macros] Found method: clearChatMessages(boolean)");
+                        } catch (NoSuchMethodException e4) {
+                            System.err.println("[Macros] Could not find clear method");
                         }
-                    } catch (NoSuchMethodException ignored2) {
-                        // Пробуем следующее имя
                     }
                 }
             }
             
+            // ✅ 4. Вызываем метод очистки
             if (clearMethod != null) {
                 if (clearMethod.getParameterCount() == 1) {
-                    clearMethod.invoke(chat, true);
+                    clearMethod.invoke(chat, true); // true = очистить всё
                 } else {
                     clearMethod.invoke(chat);
                 }
-                System.out.println("[Macros] Chat cleared successfully!");
-            } else {
-                System.err.println("[Macros] Could not find clear method in chat class");
-                // 🔧 Отладка: выводим методы, содержащие "clear" или "reset"
-                System.err.println("[Macros] Available methods in chat: " + chat.getClass().getName());
-                for (java.lang.reflect.Method m : chat.getClass().getDeclaredMethods()) {
-                    String name = m.getName().toLowerCase();
-                    if (name.contains("clear") || name.contains("reset")) {
-                        System.err.println("[Macros]   - " + m.getName() + java.util.Arrays.toString(m.getParameterTypes()));
-                    }
-                }
+                System.out.println("[Macros] ✅ Chat cleared successfully!");
             }
             
         } catch (Exception e) {
