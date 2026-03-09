@@ -64,7 +64,7 @@ public class MythicalEquipmentScreen extends Screen {
         this.addButton(this.settingsButton);
         
         this.tabButtons = new CustomButton[5];
-        String[] tabNames = {"Macros", "Armor", "Artifacts", "Creatures", "Bosses"};
+        String[] tabNames = {"Macros", "Visuals", "Artifacts", "Creatures", "Bosses"};
         
         for (int i = 0; i < 5; i++) {
             final int tabIndex = i;
