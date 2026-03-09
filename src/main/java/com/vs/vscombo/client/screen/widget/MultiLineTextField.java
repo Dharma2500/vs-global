@@ -154,35 +154,110 @@ public class MultiLineTextField {
     
     public boolean handleKeyPress(int keyCode, int scanCode, int modifiers) {
         if (!isFocused || !isEditable) return false;
-        boolean ctrl = (modifiers & 2) != 0;
+        boolean ctrl = (modifiers & GLFW.GLFW_MOD_CONTROL) != 0;
         
-        // ✅ Пробел и другие printable символы обрабатываются в charTyped
+        // ✅ Ctrl+C/V/X — обрабатываем здесь
+        if (ctrl) {
+            if (keyCode == GLFW.GLFW_KEY_C) {
+                // Копировать
+                if (hasSelection()) {
+                    String selected = getSelectedText();
+                    Minecraft.getInstance().keyboardListener.setClipboardString(selected);
+                }
+                return true;
+            }
+            if (keyCode == GLFW.GLFW_KEY_X) {
+                // Вырезать
+                if (hasSelection()) {
+                    String selected = getSelectedText();
+                    Minecraft.getInstance().keyboardListener.setClipboardString(selected);
+                    deleteSelection();
+                }
+                return true;
+            }
+            if (keyCode == GLFW.GLFW_KEY_V) {
+                // Вставить
+                String clipboard = Minecraft.getInstance().keyboardListener.getClipboardString();
+                if (clipboard != null && !clipboard.isEmpty()) {
+                    insertText(clipboard);
+                }
+                return true;
+            }
+            if (keyCode == GLFW.GLFW_KEY_A) {
+                // Выделить всё
+                selectionStart = 0;
+                cursorPos = text.length();
+                return true;
+            }
+        }
+        
+        // ✅ Пробел — разрешаем ввод (возвращаем false, чтобы charTyped обработал)
         if (keyCode == GLFW.GLFW_KEY_SPACE) {
             return false;
         }
         
-        if (keyCode == GLFW.GLFW_KEY_LEFT && cursorPos > 0) { cursorPos--; if (selectionStart == -1) selectionStart = cursorPos; autoScroll(); return true; }
-        if (keyCode == GLFW.GLFW_KEY_RIGHT && cursorPos < text.length()) { cursorPos++; if (selectionStart == -1) selectionStart = cursorPos; autoScroll(); return true; }
-        if (keyCode == GLFW.GLFW_KEY_UP) { moveCursorUp(); return true; }
-        if (keyCode == GLFW.GLFW_KEY_DOWN) { moveCursorDown(); return true; }
-        if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) { insertText("\n"); return true; }
-        if (keyCode == GLFW.GLFW_KEY_BACKSPACE) { if (hasSelection()) deleteSelection(); else if (cursorPos > 0) { text = text.substring(0, cursorPos - 1) + text.substring(cursorPos); cursorPos--; selectionStart = -1; } autoScroll(); return true; }
-        if (keyCode == GLFW.GLFW_KEY_DELETE) { if (hasSelection()) deleteSelection(); else if (cursorPos < text.length()) text = text.substring(0, cursorPos) + text.substring(cursorPos + 1); return true; }
-        if (keyCode == GLFW.GLFW_KEY_HOME) { moveToLineStart(); return true; }
-        if (keyCode == GLFW.GLFW_KEY_END) { moveToLineEnd(); return true; }
-        if (ctrl && keyCode == GLFW.GLFW_KEY_A) { selectionStart = 0; cursorPos = text.length(); return true; }
+        // Навигация и специальные клавиши
+        if (keyCode == GLFW.GLFW_KEY_LEFT && cursorPos > 0) { 
+            cursorPos--; 
+            if (selectionStart == -1) selectionStart = cursorPos; 
+            autoScroll(); 
+            return true; 
+        }
+        if (keyCode == GLFW.GLFW_KEY_RIGHT && cursorPos < text.length()) { 
+            cursorPos++; 
+            if (selectionStart == -1) selectionStart = cursorPos; 
+            autoScroll(); 
+            return true; 
+        }
+        if (keyCode == GLFW.GLFW_KEY_UP) { 
+            moveCursorUp(); 
+            return true; 
+        }
+        if (keyCode == GLFW.GLFW_KEY_DOWN) { 
+            moveCursorDown(); 
+            return true; 
+        }
+        if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) { 
+            insertText("\n"); 
+            return true; 
+        }
+        if (keyCode == GLFW.GLFW_KEY_BACKSPACE) { 
+            if (hasSelection()) deleteSelection(); 
+            else if (cursorPos > 0) { 
+                text = text.substring(0, cursorPos - 1) + text.substring(cursorPos); 
+                cursorPos--; 
+                selectionStart = -1; 
+            } 
+            autoScroll(); 
+            return true; 
+        }
+        if (keyCode == GLFW.GLFW_KEY_DELETE) { 
+            if (hasSelection()) deleteSelection(); 
+            else if (cursorPos < text.length()) {
+                text = text.substring(0, cursorPos) + text.substring(cursorPos + 1);
+            }
+            return true; 
+        }
+        if (keyCode == GLFW.GLFW_KEY_HOME) { 
+            moveToLineStart(); 
+            return true; 
+        }
+        if (keyCode == GLFW.GLFW_KEY_END) { 
+            moveToLineEnd(); 
+            return true; 
+        }
         
         // Блокируем клавишу открытия мода (R = 82)
         if (keyCode == 82) return true;
         
-        // ✅ Важно: возвращаем false для букв, цифр, пробела — они пойдут в charTyped
+        // ✅ Все остальные клавиши (буквы, цифры) — обрабатываются в charTyped
         return false;
     }
     
     public boolean charTyped(char codePoint, int modifiers) {
         if (!isFocused || !isEditable) return false;
         
-        // ✅ Разрешаем пробел (32) и переносы строк
+        // ✅ Разрешаем пробел (32), переносы строк (10, 13) и все printable символы
         if (codePoint < 32 && codePoint != 10 && codePoint != 13) {
             return false;
         }
@@ -201,16 +276,42 @@ public class MultiLineTextField {
     }
     
     private boolean hasSelection() { return selectionStart != -1 && selectionStart != cursorPos; }
-    private String getSelectedText() { if (!hasSelection()) return ""; int s = Math.min(selectionStart, cursorPos), e = Math.max(selectionStart, cursorPos); return text.substring(s, e); }
-    private void deleteSelection() { if (!hasSelection()) return; int s = Math.min(selectionStart, cursorPos), e = Math.max(selectionStart, cursorPos); text = text.substring(0, s) + text.substring(e); cursorPos = s; selectionStart = -1; }
+    private String getSelectedText() { 
+        if (!hasSelection()) return ""; 
+        int s = Math.min(selectionStart, cursorPos); 
+        int e = Math.max(selectionStart, cursorPos); 
+        return text.substring(s, e); 
+    }
+    private void deleteSelection() { 
+        if (!hasSelection()) return; 
+        int s = Math.min(selectionStart, cursorPos); 
+        int e = Math.max(selectionStart, cursorPos); 
+        text = text.substring(0, s) + text.substring(e); 
+        cursorPos = s; 
+        selectionStart = -1; 
+    }
     
     private void moveCursorUp() { autoScroll(); }
     private void moveCursorDown() { autoScroll(); }
     private void moveToLineStart() { autoScroll(); }
     private void moveToLineEnd() { autoScroll(); }
     
-    private int getCurrentLine() { String[] lines = text.split("\n", -1); int pos = 0; for (int i = 0; i < lines.length; i++) { if (pos + lines[i].length() >= cursorPos) return i; pos += lines[i].length() + 1; } return Math.max(0, lines.length - 1); }
-    private int getColumnInLine() { String[] lines = text.split("\n", -1); int line = getCurrentLine(); int pos = 0; for (int i = 0; i < line; i++) pos += lines[i].length() + 1; return cursorPos - pos; }
+    private int getCurrentLine() { 
+        String[] lines = text.split("\n", -1); 
+        int pos = 0; 
+        for (int i = 0; i < lines.length; i++) { 
+            if (pos + lines[i].length() >= cursorPos) return i; 
+            pos += lines[i].length() + 1; 
+        } 
+        return Math.max(0, lines.length - 1); 
+    }
+    private int getColumnInLine() { 
+        String[] lines = text.split("\n", -1); 
+        int line = getCurrentLine(); 
+        int pos = 0; 
+        for (int i = 0; i < line; i++) pos += lines[i].length() + 1; 
+        return cursorPos - pos; 
+    }
     
     private void autoScroll() {
         int visibleLines = (height - 2 * padding) / lineHeight;
