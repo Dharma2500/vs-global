@@ -14,7 +14,7 @@ public class TabMacros implements ITab {
     
     private MultiLineTextField textField;
     private CustomButton executeButton;
-    private CustomButton clearButton; // ✅ Новая кнопка Clear
+    private CustomButton clearButton;
     private CustomButton startButton;
     private CustomButton stopButton;
     private SmallNumberField loopCountField;
@@ -56,7 +56,6 @@ public class TabMacros implements ITab {
             }
         }
         
-        // ✅ Кнопка Execute
         this.executeButton = new CustomButton(
             contentX + TEXT_WIDTH - BUTTON_WIDTH,
             contentY + TEXT_HEIGHT + 10,
@@ -65,10 +64,9 @@ public class TabMacros implements ITab {
             btn -> executeMacros()
         );
         
-        // ✅ Новая кнопка Clear (под Execute)
         this.clearButton = new CustomButton(
             contentX + TEXT_WIDTH - BUTTON_WIDTH,
-            contentY + TEXT_HEIGHT + 35, // Под Execute (+25 пикселей)
+            contentY + TEXT_HEIGHT + 35,
             BUTTON_WIDTH, BUTTON_HEIGHT,
             new net.minecraft.util.text.StringTextComponent("Clear"),
             btn -> clearChat()
@@ -122,7 +120,7 @@ public class TabMacros implements ITab {
             textField.render(matrixStack, mouseX, mouseY, partialTicks);
         }
         if (executeButton != null) executeButton.render(matrixStack, mouseX, mouseY, partialTicks);
-        if (clearButton != null) clearButton.render(matrixStack, mouseX, mouseY, partialTicks); // ✅ Рендер Clear
+        if (clearButton != null) clearButton.render(matrixStack, mouseX, mouseY, partialTicks);
         if (startButton != null) startButton.render(matrixStack, mouseX, mouseY, partialTicks);
         if (stopButton != null) stopButton.render(matrixStack, mouseX, mouseY, partialTicks);
         if (loopCountField != null) loopCountField.render(matrixStack, mouseX, mouseY, partialTicks);
@@ -140,7 +138,7 @@ public class TabMacros implements ITab {
         boolean handled = false;
         if (textField != null) handled = textField.mouseClicked(mouseX, mouseY, button) || handled;
         if (executeButton != null) handled = executeButton.mouseClicked(mouseX, mouseY, button) || handled;
-        if (clearButton != null) handled = clearButton.mouseClicked(mouseX, mouseY, button) || handled; // ✅ Clear
+        if (clearButton != null) handled = clearButton.mouseClicked(mouseX, mouseY, button) || handled;
         if (startButton != null) handled = startButton.mouseClicked(mouseX, mouseY, button) || handled;
         if (stopButton != null) handled = stopButton.mouseClicked(mouseX, mouseY, button) || handled;
         if (loopCountField != null) handled = loopCountField.mouseClicked(mouseX, mouseY, button) || handled;
@@ -182,9 +180,6 @@ public class TabMacros implements ITab {
         return false;
     }
     
-    /**
-     * ✅ Отправка команды/сообщения
-     */
     private void sendChat(ClientPlayerEntity player, String message) {
         if (player == null || player.connection == null) return;
         
@@ -206,13 +201,18 @@ public class TabMacros implements ITab {
     }
     
     /**
-     * ✅ Очистка чата (аналог F3+D)
+     * ✅ Очистка чата — заглушка (маппинги не позволяют прямой доступ)
+     * Аналог F3+D будет добавлен позже через надёжный API
      */
     private void clearChat() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.ingameGUI != null && mc.ingameGUI.getChatGUI() != null) {
-            mc.ingameGUI.getChatGUI().clearChatMessages(true);
-        }
+        // TODO: Добавить очистку чата через надёжный API для текущих маппингов
+        System.out.println("[Macros] Clear chat requested (F3+D equivalent - not implemented for this mapping)");
+        
+        // Альтернатива: отправить команду /clearchat если сервер поддерживает
+        // Minecraft mc = Minecraft.getInstance();
+        // if (mc.player != null && mc.player.connection != null) {
+        //     mc.player.connection.send(new CChatMessagePacket("/clearchat"));
+        // }
     }
     
     private void executeMacros() {
