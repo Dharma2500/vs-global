@@ -10,6 +10,7 @@ import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
+import org.lwjgl.glfw.GLFW;
 
 @Mod.EventBusSubscriber(modid = VSGlobalMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class ModKeyBindings {
@@ -17,11 +18,11 @@ public class ModKeyBindings {
     public static KeyBinding openGuiKey;
     
     public static void register() {
-        // ✅ 1.16.5: KEY_R = 82 (GLFW key code), используем конструктор с int
+        // ✅ 1.16.5: используем InputMappings.Input с GLFW константой
         openGuiKey = new KeyBinding(
             "key.vscombo.open_gui",
             InputMappings.Type.KEYSYM,
-            82, // GLFW_KEY_R
+            GLFW.GLFW_KEY_R, // ✅ Используем GLFW константу
             "key.categories.vscombo"
         );
         ClientRegistry.registerKeyBinding(openGuiKey);
@@ -29,8 +30,8 @@ public class ModKeyBindings {
     
     @SubscribeEvent
     public static void onKeyInput(InputEvent.KeyInputEvent event) {
-        // ✅ 1.16.5: isDown() вместо isPressed()
-        if (openGuiKey.isDown()) {
+        // ✅ Проверяем нажатие
+        if (openGuiKey.isPressed()) {
             Minecraft.getInstance().setScreen(new MythicalEquipmentScreen());
         }
     }
