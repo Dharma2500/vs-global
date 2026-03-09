@@ -18,7 +18,7 @@ public class SmallNumberField {
     
     public SmallNumberField(FontRenderer font, int x, int y, int width, int height, ITextComponent initial) {
         this.font = font; this.x = x; this.y = y; this.width = width; this.height = height;
-        this.text = initial.getString(); // ✅ Mojang Mappings
+        this.text = initial.getString();
     }
     
     public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
@@ -48,21 +48,41 @@ public class SmallNumberField {
         return false;
     }
     
+    // ✅ keyPressed обрабатывает ТОЛЬКО специальные клавиши (не цифры!)
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (!isFocused) return false;
-        if ((keyCode >= GLFW.GLFW_KEY_0 && keyCode <= GLFW.GLFW_KEY_9) || (keyCode >= GLFW.GLFW_KEY_KP_0 && keyCode <= GLFW.GLFW_KEY_KP_9)) {
-            char c = (char)('0' + (keyCode >= GLFW.GLFW_KEY_0 ? keyCode - GLFW.GLFW_KEY_0 : keyCode - GLFW.GLFW_KEY_KP_0));
-            if (filter.test(text + c) && text.length() < maxLength) { text += c; return true; }
+        
+        // Backspace
+        if (keyCode == GLFW.GLFW_KEY_BACKSPACE && !text.isEmpty()) { 
+            text = text.substring(0, text.length() - 1); 
+            return true; 
         }
-        if (keyCode == GLFW.GLFW_KEY_BACKSPACE && !text.isEmpty()) { text = text.substring(0, text.length() - 1); return true; }
-        if (keyCode == GLFW.GLFW_KEY_DELETE) { text = ""; return true; }
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) { isFocused = false; return true; }
+        // Delete
+        if (keyCode == GLFW.GLFW_KEY_DELETE) { 
+            text = ""; 
+            return true; 
+        }
+        // Escape - снять фокус
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE) { 
+            isFocused = false; 
+            return true; 
+        }
+        // Стрелки (если нужно)
+        if (keyCode == GLFW.GLFW_KEY_LEFT || keyCode == GLFW.GLFW_KEY_RIGHT) {
+            return true;
+        }
+        
+        // ✅ Цифры НЕ обрабатываем здесь - они пойдут через charTyped
         return false;
     }
     
+    // ✅ charTyped обрабатывает ТОЛЬКО цифры
     public boolean charTyped(char codePoint, int modifiers) {
         if (!isFocused) return false;
-        if (Character.isDigit(codePoint) && filter.test(text + codePoint) && text.length() < maxLength) { text += codePoint; return true; }
+        if (Character.isDigit(codePoint) && filter.test(text + codePoint) && text.length() < maxLength) { 
+            text += codePoint; 
+            return true; 
+        }
         return false;
     }
     
