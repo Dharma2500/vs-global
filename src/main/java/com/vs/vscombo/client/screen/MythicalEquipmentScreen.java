@@ -36,7 +36,6 @@ public class MythicalEquipmentScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        
         int guiLeft = (this.width - Constants.GUI_WIDTH) / 2;
         int guiTop = (this.height - Constants.GUI_HEIGHT) / 2;
         
@@ -53,7 +52,6 @@ public class MythicalEquipmentScreen extends Screen {
             );
             this.addButton(tabButtons[i]);
         }
-        
         if (currentTab != null) {
             currentTab.init(this.minecraft, this.width, this.height);
         }
@@ -72,21 +70,20 @@ public class MythicalEquipmentScreen extends Screen {
     @Override
     public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(matrixStack);
-        
         int guiLeft = (this.width - Constants.GUI_WIDTH) / 2;
         int guiTop = (this.height - Constants.GUI_HEIGHT) / 2;
         
         // Фон
         RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        Minecraft.getInstance().getTextureManager().bindTexture(BACKGROUND);
+        this.minecraft.getTextureManager().bindTexture(BACKGROUND); // ✅ 1.16.5
         this.blit(matrixStack, guiLeft, guiTop, 0, 0, Constants.GUI_WIDTH, Constants.GUI_HEIGHT);
         
         // Заголовок
         String title = "Created by Vitaly_Sokolov";
-        int titleWidth = this.font.getStringWidth(title); // ✅ 1.16.5 метод
+        int titleWidth = this.font.getStringWidth(title); // ✅ 1.16.5
         this.font.drawString(matrixStack, title, 
-            guiLeft + (Constants.GUI_WIDTH - titleWidth) / 2f, 
-            guiTop + 8, 0xFFFFFF);
+            (float)(guiLeft + (Constants.GUI_WIDTH - titleWidth) / 2), 
+            (float)(guiTop + 8), 0xFFFFFF); // ✅ float координаты
         
         // Контент вкладки
         if (currentTab != null) {
@@ -96,10 +93,8 @@ public class MythicalEquipmentScreen extends Screen {
                 guiLeft + Constants.CONTENT_X + Constants.CONTENT_WIDTH,
                 guiTop + Constants.CONTENT_Y + Constants.CONTENT_HEIGHT,
                 0xFF333333);
-            
             currentTab.render(matrixStack, mouseX, mouseY, partialTicks);
         }
-        
         super.render(matrixStack, mouseX, mouseY, partialTicks);
     }
     
@@ -122,7 +117,5 @@ public class MythicalEquipmentScreen extends Screen {
     }
     
     @Override
-    public boolean shouldCloseOnEsc() {
-        return true;
-    }
+    public boolean shouldCloseOnEsc() { return true; }
 }
