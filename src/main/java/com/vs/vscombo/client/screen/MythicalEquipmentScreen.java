@@ -1,5 +1,7 @@
 package com.vs.vscombo.client.screen;
 
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.vs.vscombo.client.screen.tabs.ITab;
