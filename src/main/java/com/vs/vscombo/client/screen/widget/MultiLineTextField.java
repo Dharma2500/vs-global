@@ -156,37 +156,11 @@ public class MultiLineTextField {
         if (!isFocused || !isEditable) return false;
         boolean ctrl = (modifiers & GLFW.GLFW_MOD_CONTROL) != 0;
         
-        // ✅ Ctrl+C/V/X — обрабатываем здесь
+        // ✅ Ctrl+C/V/X — заглушка (маппинги не позволяют прямой доступ)
         if (ctrl) {
-            if (keyCode == GLFW.GLFW_KEY_C) {
-                // Копировать
-                if (hasSelection()) {
-                    String selected = getSelectedText();
-                    Minecraft.getInstance().keyboardListener.setClipboardString(selected);
-                }
-                return true;
-            }
-            if (keyCode == GLFW.GLFW_KEY_X) {
-                // Вырезать
-                if (hasSelection()) {
-                    String selected = getSelectedText();
-                    Minecraft.getInstance().keyboardListener.setClipboardString(selected);
-                    deleteSelection();
-                }
-                return true;
-            }
-            if (keyCode == GLFW.GLFW_KEY_V) {
-                // Вставить
-                String clipboard = Minecraft.getInstance().keyboardListener.getClipboardString();
-                if (clipboard != null && !clipboard.isEmpty()) {
-                    insertText(clipboard);
-                }
-                return true;
-            }
-            if (keyCode == GLFW.GLFW_KEY_A) {
-                // Выделить всё
-                selectionStart = 0;
-                cursorPos = text.length();
+            if (keyCode == GLFW.GLFW_KEY_C || keyCode == GLFW.GLFW_KEY_X || keyCode == GLFW.GLFW_KEY_V || keyCode == GLFW.GLFW_KEY_A) {
+                // TODO: Добавить поддержку буфера обмена через надёжный API
+                System.out.println("[TextField] Clipboard shortcut pressed (not implemented for this mapping)");
                 return true;
             }
         }
