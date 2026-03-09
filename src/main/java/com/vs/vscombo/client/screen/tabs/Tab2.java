@@ -23,24 +23,24 @@ public class Tab2 implements ITab {
         this.contentX = contentX;
         this.contentY = contentY;
         
-        // ✅ Кнопка Block (включает анимацию тотема)
+        // ✅ Кнопка Block (включает эффект портала)
         this.blockButton = new CustomButton(
             contentX,
             contentY,
             BUTTON_WIDTH,
             BUTTON_HEIGHT,
             new StringTextComponent("Block"),
-            btn -> VisualsManager.setBlockTotemEnabled(true)
+            btn -> VisualsManager.setBlockPortalEnabled(true)
         );
         
-        // ✅ Кнопка Stop (отключает анимацию тотема)
+        // ✅ Кнопка Stop (отключает эффект портала)
         this.stopButton = new CustomButton(
             contentX,
             contentY + BUTTON_HEIGHT + 5,
             BUTTON_WIDTH,
             BUTTON_HEIGHT,
             new StringTextComponent("Stop"),
-            btn -> VisualsManager.setBlockTotemEnabled(false)
+            btn -> VisualsManager.setBlockPortalEnabled(false)
         );
     }
     
@@ -55,12 +55,12 @@ public class Tab2 implements ITab {
         if (stopButton != null) stopButton.render(matrixStack, mouseX, mouseY, partialTicks);
         
         // ✅ Индикатор состояния
-        String status = VisualsManager.isBlockTotemEnabled() ? "§a§lENABLED" : "§c§lDISABLED";
-        font.draw(matrixStack, "Block Totem: " + status, 
+        String status = VisualsManager.isBlockPortalEnabled() ? "§a§lENABLED" : "§c§lDISABLED";
+        font.draw(matrixStack, "Block Portal: " + status, 
             (float)(contentX), (float)(contentY + BUTTON_HEIGHT * 2 + 15), 0xFFFFFF);
         
         // Описание
-        font.draw(matrixStack, "Shows totem animation when", 
+        font.draw(matrixStack, "Shows portal particles when", 
             (float)(contentX), (float)(contentY + BUTTON_HEIGHT * 2 + 35), 0x808080);
         font.draw(matrixStack, "a block is broken", 
             (float)(contentX), (float)(contentY + BUTTON_HEIGHT * 2 + 45), 0x808080);
