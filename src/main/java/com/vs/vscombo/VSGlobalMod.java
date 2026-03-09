@@ -1,7 +1,6 @@
 package com.vs.vscombo;
 
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
@@ -17,9 +16,7 @@ public class VSGlobalMod {
     public VSGlobalMod() {
         INSTANCE = this;
         
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        
-        // Регистрируем себя в Forge
+        // Регистрируем мод в Forge EventBus (для общих событий)
         MinecraftForge.EVENT_BUS.register(this);
         
         LOGGER.info("VS Global Mod initialized!");
