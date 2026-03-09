@@ -7,7 +7,7 @@ import com.vs.vscombo.client.screen.widget.SmallNumberField;
 import com.vs.vscombo.util.MacroStorage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.network.play.client.ChatPacket;
+import net.minecraft.network.play.client.CChatMessagePacket;
 
 public class TabMacros implements ITab {
     
@@ -177,8 +177,8 @@ public class TabMacros implements ITab {
         for (String line : lines) {
             line = line.trim();
             if (!line.isEmpty()) {
-                // ✅ Mojang Mappings 1.16.5: ChatPacket + sendPacket
-                mc.player.connection.sendPacket(new ChatPacket(line));
+                // ✅ Mojang Mappings 1.16.5: CChatMessagePacket + sendPacket
+                mc.player.connection.sendPacket(new CChatMessagePacket(line));
             }
         }
     }
@@ -218,8 +218,8 @@ public class TabMacros implements ITab {
                         if (!line.isEmpty()) {
                             Minecraft mc = Minecraft.getInstance();
                             if (mc.player != null && mc.player.connection != null) {
-                                // ✅ Mojang Mappings 1.16.5: ChatPacket + sendPacket
-                                mc.player.connection.sendPacket(new ChatPacket(line));
+                                // ✅ Mojang Mappings 1.16.5: CChatMessagePacket + sendPacket
+                                mc.player.connection.sendPacket(new CChatMessagePacket(line));
                             }
                         }
                     }
