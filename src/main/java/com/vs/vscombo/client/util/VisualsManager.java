@@ -12,121 +12,71 @@ public class VisualsManager {
     private static BlockPos lastBrokenBlock = null;
     private static long lastBreakTime = 0;
     
-    /**
-     * ✅ Включить/выключить эффект портала на блоках
-     */
     public static void setBlockPortalEnabled(boolean enabled) {
         blockPortalEnabled = enabled;
         System.out.println("[Visuals] Block Portal: " + (enabled ? "ENABLED" : "DISABLED"));
     }
     
-    /**
-     * ✅ Проверить, включен ли эффект
-     */
     public static boolean isBlockPortalEnabled() {
         return blockPortalEnabled;
     }
     
-    /**
-     * ✅ Вызывается при разрушении блока
-     */
     public static void onBlockBroken(BlockPos pos) {
         if (!blockPortalEnabled) return;
+        if (pos == null) return;
         
         lastBrokenBlock = pos;
         lastBreakTime = System.currentTimeMillis();
         
-        // Воспроизводим эффект портала
-        playPortalAnimation();
+        playPortalParticles();
     }
     
     /**
-     * ✅ Воспроизводит эффект портала (через рефлексию для совместимости)
+     * ✅ Добавляет частицы портала (без звука, без рефлексии — максимально просто)
      */
-    private static void playPortalAnimation() {
+    private static void playPortalParticles() {
         Minecraft mc = Minecraft.getInstance();
         ClientPlayerEntity player = mc.player;
         
-        if (player == null) return;
+        if (player == null || lastBrokenBlock == null) return;
         
-        // ✅ Создаём предмет обсидиан для визуальной связи с порталом
-        ItemStack obsidian = new ItemStack(Items.OBSIDIAN);
+        // Координаты центра блока
+        double x = lastBrokenBlock.getX() + 0.5;
+        double y = lastBrokenBlock.getY() + 0.5;
+        double z = lastBrokenBlock.getZ() + 0.5;
         
-        // ✅ Частицы портала (через рефлексию для совместимости с маппингами)
+        // ✅ Используем прямой вызов addParticle через Minecraft
+        // Это работает в любых маппингах 1.16.5
         try {
-            // Получаем мир через игрока (рефлексия для обхода доступа)
-            Object world = null;
-            for (java.lang.reflect.Field field : player.getClass().getDeclaredFields()) {
-                String typeName = field.getType().getSimpleName();
-                if (typeName.equals("ClientWorld") || typeName.equals("World")) {
-                    field.setAccessible(true);
-                    world = field.get(player);
-                    break;
+            // Получаем мир через игрока
+            net.minecraft.client.world.ClientWorld world = player.world;
+            if (world != null) {
+                // Добавляем частицы портала (30 штук)
+                for (int i = 0; i < 30; i++) {
+                    world.addParticle(
+                        net.minecraft.particles.ParticleTypes.PORTAL,
+                        x + (Math.random() - 0.5) * 2,
+                        y + (Math.random() - 0.5) * 2,
+                        z + (Math.random() - 0.5) * 2,
+                        (Math.random() - 0.5) * 0.2,
+                        (Math.random() - 0.5) * 0.2,
+                        (Math.random() - 0.5) * 0.2
+                    );
                 }
-            }
-            
-            if (world != null && lastBrokenBlock != null) {
-                double x = lastBrokenBlock.getX() + 0.5;
-                double y = lastBrokenBlock.getY() + 0.5;
-                double z = lastBrokenBlock.getZ() + 0.5;
-                
-                // 🔍 Ищем тип частиц PORTAL через рефлексию
-                Class<?> particleTypesClass = Class.forName("net.minecraft.particles.ParticleTypes");
-                java.lang.reflect.Field portalField = null;
-                
-                // Ищем поле с "PORTAL" в имени
-                for (java.lang.reflect.Field f : particleTypesClass.getDeclaredFields()) {
-                    if (f.getName().toUpperCase().contains("PORTAL")) {
-                        portalField = f;
-                        break;
-                    }
-                }
-                
-                if (portalField != null) {
-                    portalField.setAccessible(true);
-                    Object portalParticle = portalField.get(null);
-                    
-                    // Добавляем частицы портала
-                    for (int i = 0; i < 40; i++) {
-                        java.lang.reflect.Method addParticleMethod = world.getClass()
-                            .getMethod("addParticle", 
-                                Class.forName("net.minecraft.particles.IParticleData"),
-                                double.class, double.class, double.class,
-                                double.class, double.class, double.class);
-                        
-                        addParticleMethod.invoke(world, portalParticle,
-                            x + (Math.random() - 0.5) * 3,
-                            y + (Math.random() - 0.5) * 3,
-                            z + (Math.random() - 0.5) * 3,
-                            (Math.random() - 0.5) * 0.3,
-                            (Math.random() - 0.5) * 0.3,
-                            (Math.random() - 0.5) * 0.3
-                        );
-                    }
-                }
+                System.out.println("[Visuals] Portal particles spawned at " + lastBrokenBlock);
             }
         } catch (Exception e) {
-            // Частицы опциональны - пропускаем если не найдены
-            System.out.println("[Visuals] Portal particles skipped (mapping compatibility)");
+            // Если не вышло — просто логируем
+            System.out.println("[Visuals] Failed to spawn particles: " + e.getMessage());
         }
-        
-        System.out.println("[Visuals] Portal animation played at block: " + lastBrokenBlock);
     }
     
-    /**
-     * ✅ Проверяет, нужно ли показать эффект (для рендера)
-     */
     public static boolean shouldShowPortalEffect() {
         if (!blockPortalEnabled) return false;
         if (lastBrokenBlock == null) return false;
-        
-        // Показываем эффект в течение 1.5 секунд после разрушения
         return (System.currentTimeMillis() - lastBreakTime) < 1500;
     }
     
-    /**
-     * ✅ Сбросить состояние
-     */
     public static void reset() {
         lastBrokenBlock = null;
         lastBreakTime = 0;
