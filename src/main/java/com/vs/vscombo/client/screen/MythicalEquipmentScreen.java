@@ -2,7 +2,7 @@ package com.vs.vscombo.client.screen;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.vs.vscombo.client.screen.tabs.ITab;
-import com.vs.vscombo.client.screen.tabs.Tab1;
+import com.vs.vscombo.client.screen.tabs.TabMacros;
 import com.vs.vscombo.client.screen.tabs.Tab2;
 import com.vs.vscombo.client.screen.tabs.Tab3;
 import com.vs.vscombo.client.screen.tabs.Tab4;
@@ -37,7 +37,7 @@ public class MythicalEquipmentScreen extends Screen {
     public MythicalEquipmentScreen() {
         super(new TranslationTextComponent("gui.vsglobal.mythical_equipment"));
         this.tabs = new ITab[]{
-            new Tab1(), new Tab2(), new Tab3(), new Tab4(), new Tab5()
+            new TabMacros(), new Tab2(), new Tab3(), new Tab4(), new Tab5()
         };
         this.currentTab = tabs[0];
     }
@@ -64,7 +64,7 @@ public class MythicalEquipmentScreen extends Screen {
         this.addButton(this.settingsButton);
         
         this.tabButtons = new CustomButton[5];
-        String[] tabNames = {"Weapons", "Armor", "Artifacts", "Creatures", "Bosses"};
+        String[] tabNames = {"Macros", "Armor", "Artifacts", "Creatures", "Bosses"};
         
         for (int i = 0; i < 5; i++) {
             final int tabIndex = i;
@@ -176,14 +176,22 @@ public class MythicalEquipmentScreen extends Screen {
     }
     
     @Override
-    public boolean shouldCloseOnEsc() { return true; }
-    @Override
-    public boolean isPauseScreen() { return false; }
-
-    @Override
     public boolean charTyped(char codePoint, int modifiers) {
-        if (currentTab != null && currentTab.charTyped(codePoint, modifiers)) {
-            return true;
+        if (currentTab != null) {
+            if (currentTab.charTyped(codePoint, modifiers)) {
+                return true;
+            }
         }
         return super.charTyped(codePoint, modifiers);
+    }
+    
+    @Override
+    public boolean shouldCloseOnEsc() {
+        return true;
+    }
+    
+    @Override
+    public boolean isPauseScreen() {
+        return false;
+    }
 }
