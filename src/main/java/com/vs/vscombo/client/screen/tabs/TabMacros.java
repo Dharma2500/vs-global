@@ -200,34 +200,34 @@ public class TabMacros implements ITab {
         }
     }
     
-/**
- * ✅ Очистка чата (аналог F3+D) — прямой доступ к полям
- */
-private void clearChat() {
-    Minecraft mc = Minecraft.getInstance();
-    
-    try {
-        // Пробуем разные варианты имён полей для разных маппингов
+    /**
+     * ✅ Очистка чата (аналог F3+D) — универсальный метод
+     */
+    private void clearChat() {
+        Minecraft mc = Minecraft.getInstance();
         
-        // Вариант 1: Mojang Mappings (официальные)
+        // Пробуем очистить через доступные поля (разные маппинги)
         try {
-            java.lang.reflect.Field guiField = mc.getClass().getField("gui");
+            // Вариант для большинства сборок: через поле gui
+            java.lang.reflect.Field guiField = mc.getClass().getDeclaredField("gui");
+            guiField.setAccessible(true);
             Object gui = guiField.get(mc);
             
             if (gui != null) {
-                // Ищем chatGUI или chat поле
+                // Ищем поле chat или chatGUI
                 java.lang.reflect.Field chatField = null;
                 try {
-                    chatField = gui.getClass().getField("chatGUI");
+                    chatField = gui.getClass().getDeclaredField("chat");
                 } catch (NoSuchFieldException e) {
                     try {
-                        chatField = gui.getClass().getField("chat");
+                        chatField = gui.getClass().getDeclaredField("chatGUI");
                     } catch (NoSuchFieldException e2) {
-                        // Поле не найдено
+                        // Не найдено
                     }
                 }
                 
                 if (chatField != null) {
+                    chatField.setAccessible(true);
                     Object chatGUI = chatField.get(gui);
                     
                     if (chatGUI != null) {
@@ -235,92 +235,34 @@ private void clearChat() {
                         java.lang.reflect.Method clearMethod = null;
                         try {
                             clearMethod = chatGUI.getClass().getMethod("clearChatMessages", boolean.class);
+                            clearMethod.invoke(chatGUI, true);
                         } catch (NoSuchMethodException e) {
                             try {
                                 clearMethod = chatGUI.getClass().getMethod("resetChat");
+                                clearMethod.invoke(chatGUI);
                             } catch (NoSuchMethodException e2) {
                                 // Метод не найден
                             }
                         }
-                        
                         if (clearMethod != null) {
-                            if (clearMethod.getParameterCount() == 1) {
-                                clearMethod.invoke(chatGUI, true);
-                            } else {
-                                clearMethod.invoke(chatGUI);
-                            }
-                            System.out.println("[Macros] Chat cleared successfully!");
+                            System.out.println("[Macros] Chat cleared!");
                             return;
                         }
                     }
                 }
             }
-        } catch (Exception e1) {
-            System.out.println("[Macros] Clear attempt 1 failed: " + e1.getMessage());
-        }
-        
-        // Вариант 2: Forge Mappings (ingameGUI)
-        try {
-            java.lang.reflect.Field ingameGUIField = mc.getClass().getField("ingameGUI");
-            Object ingameGUI = ingameGUIField.get(mc);
-            
-            if (ingameGUI != null) {
-                java.lang.reflect.Method getChatMethod = ingameGUI.getClass().getMethod("getChatGUI");
-                Object chatGUI = getChatMethod.invoke(ingameGUI);
-                
-                if (chatGUI != null) {
-                    java.lang.reflect.Method clearMethod = chatGUI.getClass().getMethod("clearChatMessages", boolean.class);
-                    clearMethod.invoke(chatGUI, true);
-                    System.out.println("[Macros] Chat cleared via ingameGUI!");
-                    return;
-                }
-            }
-        } catch (Exception e2) {
-            System.out.println("[Macros] Clear attempt 2 failed: " + e2.getMessage());
-        }
-        
-        // Вариант 3: Отправляем команду /clear (если сервер поддерживает)
-        try {
-            if (mc.player != null && mc.player.connection != null) {
-                // Пробуем стандартную команду очистки
-                mc.player.connection.send(new net.minecraft.network.play.client.CChatMessagePacket("/clear"));
-                System.out.println("[Macros] Sent /clear command");
-            }
-        } catch (Exception e3) {
-            System.out.println("[Macros] Clear attempt 3 failed: " + e3.getMessage());
-        }
-        
-        System.out.println("[Macros] Could not clear chat - mapping not fully supported");
-        
-    } catch (Exception e) {
-        System.out.println("[Macros] Clear chat error: " + e.getMessage());
-        e.printStackTrace();
-    }
-}
-            // Альтернатива: через GUI field
-            try {
-                java.lang.reflect.Field guiField = mc.getClass().getField("gui");
-                Object gui = guiField.get(mc);
-                
-                if (gui != null) {
-                    java.lang.reflect.Field chatField = gui.getClass().getField("chatGUI");
-                    Object chatGUI = chatField.get(gui);
-                    
-                    if (chatGUI != null) {
-                        java.lang.reflect.Method clearMethod = chatGUI.getClass().getMethod("clearChatMessages", boolean.class);
-                        clearMethod.invoke(chatGUI, true);
-                        System.out.println("[Macros] Chat cleared via gui.chatGUI");
-                        return;
-                    }
-                }
-            } catch (Exception e2) {
-                System.out.println("[Macros] Clear via gui failed");
-            }
-            
-            System.out.println("[Macros] Could not clear chat - mapping not supported");
-            
         } catch (Exception e) {
-            System.out.println("[Macros] Clear chat error: " + e.getMessage());
+            // Игнорируем ошибки рефлексии
+        }
+        
+        // Фолбэк: отправляем команду очистки (работает на многих серверах)
+        if (mc.player != null && mc.player.connection != null) {
+            try {
+                mc.player.connection.send(new CChatMessagePacket("/clearchat"));
+                System.out.println("[Macros] Sent /clearchat");
+            } catch (Exception e) {
+                System.out.println("[Macros] Could not clear chat");
+            }
         }
     }
     
