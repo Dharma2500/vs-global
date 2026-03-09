@@ -7,7 +7,8 @@ public interface ITab {
     /**
      * Отрисовка содержимого вкладки
      */
-    void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks);
+    void render(MatrixStack matrixStack, int mouseX, int mouseY, 
+                float partialTicks, int contentX, int contentY);
     
     /**
      * Инициализация вкладки
