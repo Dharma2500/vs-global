@@ -7,9 +7,9 @@ import com.vs.vscombo.client.screen.tabs.Tab2;
 import com.vs.vscombo.client.screen.tabs.Tab3;
 import com.vs.vscombo.client.screen.tabs.Tab4;
 import com.vs.vscombo.client.screen.tabs.Tab5;
+import com.vs.vscombo.client.screen.widget.CustomButton;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
@@ -20,9 +20,9 @@ public class MythicalEquipmentScreen extends Screen {
     
     private ITab[] tabs;
     private ITab currentTab;
-    private Button[] tabButtons;
-    private Button closeButton;
-    private Button settingsButton;
+    private CustomButton[] tabButtons;
+    private CustomButton closeButton;
+    private CustomButton settingsButton;
     
     // Размеры GUI
     private static final int GUI_WIDTH = 512;
@@ -50,8 +50,8 @@ public class MythicalEquipmentScreen extends Screen {
         int guiLeft = (this.width - GUI_WIDTH) / 2;
         int guiTop = (this.height - GUI_HEIGHT) / 2;
         
-        // Кнопка закрытия (X)
-        this.closeButton = new Button(
+        // ✅ Кнопка закрытия (X) - CustomButton
+        this.closeButton = new CustomButton(
             guiLeft + GUI_WIDTH - 28,
             guiTop + 6,
             22,
@@ -61,8 +61,8 @@ public class MythicalEquipmentScreen extends Screen {
         );
         this.addButton(this.closeButton);
         
-        // Кнопка настроек (⚙)
-        this.settingsButton = new Button(
+        // ✅ Кнопка настроек (⚙) - CustomButton
+        this.settingsButton = new CustomButton(
             guiLeft + 6,
             guiTop + 6,
             22,
@@ -74,13 +74,13 @@ public class MythicalEquipmentScreen extends Screen {
         );
         this.addButton(this.settingsButton);
         
-        // Кнопки вкладок слева
-        this.tabButtons = new Button[5];
+        // ✅ Кнопки вкладок слева - CustomButton
+        this.tabButtons = new CustomButton[5];
         String[] tabNames = {"Weapons", "Armor", "Artifacts", "Creatures", "Bosses"};
         
         for (int i = 0; i < 5; i++) {
             final int tabIndex = i;
-            tabButtons[i] = new Button(
+            tabButtons[i] = new CustomButton(
                 guiLeft + 8,
                 guiTop + 40 + (i * (BUTTON_HEIGHT + BUTTON_SPACING)),
                 SIDEBAR_WIDTH - 16,
@@ -118,7 +118,7 @@ public class MythicalEquipmentScreen extends Screen {
         // Основная стеклянная панель (фон GUI)
         drawGlassPanel(matrixStack, guiLeft, guiTop, GUI_WIDTH, GUI_HEIGHT, GLASS_ALPHA);
         
-        // ✅ Заголовок изменён на "Created by Vitaly_Sokolov"
+        // Заголовок
         String title = "Created by Vitaly_Sokolov";
         int titleWidth = this.font.width(title);
         this.font.draw(matrixStack, title, 
@@ -137,10 +137,10 @@ public class MythicalEquipmentScreen extends Screen {
         drawGlassPanel(matrixStack, guiLeft + SIDEBAR_WIDTH + 5, guiTop + 35, 
             GUI_WIDTH - SIDEBAR_WIDTH - 10, GUI_HEIGHT - 40, GLASS_ALPHA - 30);
         
-        // Рендерим кнопки
+        // ✅ Рендерим кнопки (теперь без белых полосок)
         super.render(matrixStack, mouseX, mouseY, partialTicks);
         
-        // ✅ Подсветка активной кнопки (только рамка, без полосок)
+        // ✅ Подсветка активной вкладки (только рамка)
         for (int i = 0; i < tabButtons.length; i++) {
             boolean isActive = (currentTab == tabs[i]);
             if (isActive) {
@@ -165,7 +165,6 @@ public class MythicalEquipmentScreen extends Screen {
      */
     private void drawGlassPanel(MatrixStack matrixStack, int x, int y, 
                                  int width, int height, int alpha) {
-        // Фоновый цвет (тёмно-синий/серый с прозрачностью)
         int backgroundColor = (alpha << 24) | 0x1A1A2E;
         fill(matrixStack, x, y, x + width, y + height, backgroundColor);
         
@@ -184,13 +183,9 @@ public class MythicalEquipmentScreen extends Screen {
      */
     private void drawBorder(MatrixStack matrixStack, int x, int y, 
                             int width, int height, int color) {
-        // Верхняя граница
         fill(matrixStack, x, y, x + width, y + 1, color);
-        // Нижняя граница
         fill(matrixStack, x, y + height - 1, x + width, y + height, color);
-        // Левая граница
         fill(matrixStack, x, y, x + 1, y + height, color);
-        // Правая граница
         fill(matrixStack, x + width - 1, y, x + width, y + height, color);
     }
     
@@ -204,7 +199,6 @@ public class MythicalEquipmentScreen extends Screen {
     
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        // Закрытие по ESC
         if (keyCode == 256) {
             this.minecraft.setScreen(null);
             return true;
