@@ -31,27 +31,20 @@ public class VisualsManager {
         playPortalParticles();
     }
     
-    /**
-     * ✅ Добавляет частицы портала (без звука, без рефлексии — максимально просто)
-     */
     private static void playPortalParticles() {
         Minecraft mc = Minecraft.getInstance();
         ClientPlayerEntity player = mc.player;
         
         if (player == null || lastBrokenBlock == null) return;
         
-        // Координаты центра блока
         double x = lastBrokenBlock.getX() + 0.5;
         double y = lastBrokenBlock.getY() + 0.5;
         double z = lastBrokenBlock.getZ() + 0.5;
         
-        // ✅ Используем прямой вызов addParticle через Minecraft
-        // Это работает в любых маппингах 1.16.5
         try {
-            // Получаем мир через игрока
-            net.minecraft.client.world.ClientWorld world = player.world;
+            // ✅ Используем mc.world вместо player.world
+            net.minecraft.client.world.ClientWorld world = mc.world;
             if (world != null) {
-                // Добавляем частицы портала (30 штук)
                 for (int i = 0; i < 30; i++) {
                     world.addParticle(
                         net.minecraft.particles.ParticleTypes.PORTAL,
@@ -66,7 +59,6 @@ public class VisualsManager {
                 System.out.println("[Visuals] Portal particles spawned at " + lastBrokenBlock);
             }
         } catch (Exception e) {
-            // Если не вышло — просто логируем
             System.out.println("[Visuals] Failed to spawn particles: " + e.getMessage());
         }
     }
