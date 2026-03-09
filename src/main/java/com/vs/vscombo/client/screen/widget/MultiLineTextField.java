@@ -5,6 +5,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.AbstractGui;
+import net.minecraft.client.gui.GuiUtils;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import org.lwjgl.glfw.GLFW;
@@ -55,7 +56,7 @@ public class MultiLineTextField {
         AbstractGui.fill(matrixStack, x + width - 1, y, x + width, y + height, 0xFF303050);
         AbstractGui.fill(matrixStack, x, y + height - 1, x + width, y + height, 0xFF303050);
         
-        // ✅ Scissor: используем getWindow().getGuiScaledHeight()
+        // ✅ Scissor: getWindow().getGuiScaledHeight()
         Minecraft mc = Minecraft.getInstance();
         RenderSystem.enableScissor(x + 1, mc.getWindow().getGuiScaledHeight() - (y + height - 1), width - 2, height - 2);
         
@@ -174,17 +175,17 @@ public class MultiLineTextField {
         if (keyCode == GLFW.GLFW_KEY_END) { moveToLineEnd(); return true; }
         if (ctrl && keyCode == GLFW.GLFW_KEY_A) { selectionStart = 0; cursorPos = text.length(); return true; }
         
-        // ✅ Clipboard через keyboardListener (Mojang Mappings 1.16.5)
+        // ✅ Clipboard через GuiUtils (универсальный для Mojang 1.16.5)
         if (ctrl && (keyCode == GLFW.GLFW_KEY_C || keyCode == GLFW.GLFW_KEY_X)) {
             if (hasSelection()) {
                 String selected = getSelectedText();
-                Minecraft.getInstance().keyboardListener.setClipboardString(selected);
+                GuiUtils.setClipboardString(selected);
                 if (keyCode == GLFW.GLFW_KEY_X) deleteSelection();
             }
             return true;
         }
         if (ctrl && keyCode == GLFW.GLFW_KEY_V) {
-            String clipboard = Minecraft.getInstance().keyboardListener.getClipboardString();
+            String clipboard = GuiUtils.getClipboardString();
             if (clipboard != null && !clipboard.isEmpty()) insertText(clipboard);
             return true;
         }
