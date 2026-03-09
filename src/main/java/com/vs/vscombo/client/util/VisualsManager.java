@@ -8,95 +8,53 @@ import net.minecraft.util.math.BlockPos;
 
 public class VisualsManager {
     
-    private static boolean blockTotemEnabled = false;
+    private static boolean blockPortalEnabled = false;
     private static BlockPos lastBrokenBlock = null;
     private static long lastBreakTime = 0;
     
     /**
-     * ✅ Включить/выключить анимацию тотема на блоках
+     * ✅ Включить/выключить эффект портала на блоках
      */
-    public static void setBlockTotemEnabled(boolean enabled) {
-        blockTotemEnabled = enabled;
-        System.out.println("[Visuals] Block Totem: " + (enabled ? "ENABLED" : "DISABLED"));
+    public static void setBlockPortalEnabled(boolean enabled) {
+        blockPortalEnabled = enabled;
+        System.out.println("[Visuals] Block Portal: " + (enabled ? "ENABLED" : "DISABLED"));
     }
     
     /**
-     * ✅ Проверить, включена ли анимация
+     * ✅ Проверить, включен ли эффект
      */
-    public static boolean isBlockTotemEnabled() {
-        return blockTotemEnabled;
+    public static boolean isBlockPortalEnabled() {
+        return blockPortalEnabled;
     }
     
     /**
      * ✅ Вызывается при разрушении блока
      */
     public static void onBlockBroken(BlockPos pos) {
-        if (!blockTotemEnabled) return;
+        if (!blockPortalEnabled) return;
         
         lastBrokenBlock = pos;
         lastBreakTime = System.currentTimeMillis();
         
-        // Воспроизводим анимацию тотема
-        playTotemAnimation();
+        // Воспроизводим эффект портала
+        playPortalAnimation();
     }
     
     /**
-     * ✅ Воспроизводит анимацию тотема (полностью через рефлексию)
+     * ✅ Воспроизводит эффект портала (через рефлексию для совместимости)
      */
-    private static void playTotemAnimation() {
+    private static void playPortalAnimation() {
         Minecraft mc = Minecraft.getInstance();
         ClientPlayerEntity player = mc.player;
         
         if (player == null) return;
         
-        // ✅ Создаём предмет тотем
-        ItemStack totem = new ItemStack(Items.TOTEM_OF_UNDYING);
+        // ✅ Создаём предмет обсидиан для визуальной связи с порталом
+        ItemStack obsidian = new ItemStack(Items.OBSIDIAN);
         
-        // ✅ Звук тотема (через рефлексию)
+        // ✅ Частицы портала (через рефлексию для совместимости с маппингами)
         try {
-            Class<?> soundEventsClass = Class.forName("net.minecraft.util.SoundEvents");
-            java.lang.reflect.Field totemField = null;
-            
-            for (java.lang.reflect.Field f : soundEventsClass.getDeclaredFields()) {
-                if (f.getName().toUpperCase().contains("TOTEM") && 
-                    f.getName().toUpperCase().contains("USE")) {
-                    totemField = f;
-                    break;
-                }
-            }
-            
-            if (totemField != null) {
-                totemField.setAccessible(true);
-                Object soundEvent = totemField.get(null);
-                
-                if (soundEvent != null) {
-                    java.lang.reflect.Method playSoundMethod = player.getClass()
-                        .getMethod("playSound", 
-                            Class.forName("net.minecraft.util.SoundEvent"),
-                            Class.forName("net.minecraft.util.SoundCategory"),
-                            float.class, float.class);
-                    
-                    Class<?> soundCategoryClass = Class.forName("net.minecraft.util.SoundCategory");
-                    Object playersCategory = null;
-                    for (Object cat : soundCategoryClass.getEnumConstants()) {
-                        if (cat.toString().equalsIgnoreCase("PLAYERS")) {
-                            playersCategory = cat;
-                            break;
-                        }
-                    }
-                    
-                    if (playersCategory != null) {
-                        playSoundMethod.invoke(player, soundEvent, playersCategory, 1.0f, 1.0f);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            // Звук опционален
-        }
-        
-        // ✅ Частицы тотема (через рефлексию)
-        try {
-            // 🔍 Получаем мир через рефлексию (обход доступа к полю world)
+            // Получаем мир через игрока (рефлексия для обхода доступа)
             Object world = null;
             for (java.lang.reflect.Field field : player.getClass().getDeclaredFields()) {
                 String typeName = field.getType().getSimpleName();
@@ -112,45 +70,58 @@ public class VisualsManager {
                 double y = lastBrokenBlock.getY() + 0.5;
                 double z = lastBrokenBlock.getZ() + 0.5;
                 
-                // 🔍 Ищем тип частиц через рефлексию
+                // 🔍 Ищем тип частиц PORTAL через рефлексию
                 Class<?> particleTypesClass = Class.forName("net.minecraft.particles.ParticleTypes");
-                java.lang.reflect.Field endRodField = particleTypesClass.getDeclaredField("END_ROD");
-                endRodField.setAccessible(true);
-                Object endRodParticle = endRodField.get(null);
+                java.lang.reflect.Field portalField = null;
                 
-                // 🔍 Добавляем частицы через рефлексию
-                for (int i = 0; i < 30; i++) {
-                    java.lang.reflect.Method addParticleMethod = world.getClass()
-                        .getMethod("addParticle", 
-                            Class.forName("net.minecraft.particles.IParticleData"),
-                            double.class, double.class, double.class,
-                            double.class, double.class, double.class);
+                // Ищем поле с "PORTAL" в имени
+                for (java.lang.reflect.Field f : particleTypesClass.getDeclaredFields()) {
+                    if (f.getName().toUpperCase().contains("PORTAL")) {
+                        portalField = f;
+                        break;
+                    }
+                }
+                
+                if (portalField != null) {
+                    portalField.setAccessible(true);
+                    Object portalParticle = portalField.get(null);
                     
-                    addParticleMethod.invoke(world, endRodParticle,
-                        x + (Math.random() - 0.5) * 2,
-                        y + (Math.random() - 0.5) * 2,
-                        z + (Math.random() - 0.5) * 2,
-                        (Math.random() - 0.5) * 0.5,
-                        (Math.random() - 0.5) * 0.5,
-                        (Math.random() - 0.5) * 0.5
-                    );
+                    // Добавляем частицы портала
+                    for (int i = 0; i < 40; i++) {
+                        java.lang.reflect.Method addParticleMethod = world.getClass()
+                            .getMethod("addParticle", 
+                                Class.forName("net.minecraft.particles.IParticleData"),
+                                double.class, double.class, double.class,
+                                double.class, double.class, double.class);
+                        
+                        addParticleMethod.invoke(world, portalParticle,
+                            x + (Math.random() - 0.5) * 3,
+                            y + (Math.random() - 0.5) * 3,
+                            z + (Math.random() - 0.5) * 3,
+                            (Math.random() - 0.5) * 0.3,
+                            (Math.random() - 0.5) * 0.3,
+                            (Math.random() - 0.5) * 0.3
+                        );
+                    }
                 }
             }
         } catch (Exception e) {
-            // Частицы опциональны
-            System.out.println("[Visuals] Particles skipped (mapping compatibility)");
+            // Частицы опциональны - пропускаем если не найдены
+            System.out.println("[Visuals] Portal particles skipped (mapping compatibility)");
         }
         
-        System.out.println("[Visuals] Totem animation played at block: " + lastBrokenBlock);
+        System.out.println("[Visuals] Portal animation played at block: " + lastBrokenBlock);
     }
     
     /**
-     * ✅ Проверяет, нужно ли показать анимацию
+     * ✅ Проверяет, нужно ли показать эффект (для рендера)
      */
-    public static boolean shouldShowTotemEffect() {
-        if (!blockTotemEnabled) return false;
+    public static boolean shouldShowPortalEffect() {
+        if (!blockPortalEnabled) return false;
         if (lastBrokenBlock == null) return false;
-        return (System.currentTimeMillis() - lastBreakTime) < 2000;
+        
+        // Показываем эффект в течение 1.5 секунд после разрушения
+        return (System.currentTimeMillis() - lastBreakTime) < 1500;
     }
     
     /**
