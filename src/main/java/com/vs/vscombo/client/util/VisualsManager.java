@@ -42,24 +42,70 @@ public class VisualsManager {
         double z = lastBrokenBlock.getZ() + 0.5;
         
         try {
-            // ✅ Используем mc.world вместо player.world
-            net.minecraft.client.world.ClientWorld world = mc.world;
-            if (world != null) {
-                for (int i = 0; i < 30; i++) {
-                    world.addParticle(
-                        net.minecraft.particles.ParticleTypes.PORTAL,
-                        x + (Math.random() - 0.5) * 2,
-                        y + (Math.random() - 0.5) * 2,
-                        z + (Math.random() - 0.5) * 2,
-                        (Math.random() - 0.5) * 0.2,
-                        (Math.random() - 0.5) * 0.2,
-                        (Math.random() - 0.5) * 0.2
-                    );
+            // 🔍 Получаем мир через рефлексию (обход доступа к полю world)
+            Object world = null;
+            
+            // Пробуем получить через игрока
+            for (java.lang.reflect.Field field : player.getClass().getDeclaredFields()) {
+                String typeName = field.getType().getSimpleName();
+                if (typeName.equals("ClientWorld") || typeName.equals("World")) {
+                    field.setAccessible(true);
+                    world = field.get(player);
+                    break;
                 }
-                System.out.println("[Visuals] Portal particles spawned at " + lastBrokenBlock);
+            }
+            
+            // Если не нашли у игрока, пробуем у Minecraft
+            if (world == null) {
+                for (java.lang.reflect.Field field : mc.getClass().getDeclaredFields()) {
+                    String typeName = field.getType().getSimpleName();
+                    if (typeName.equals("ClientWorld") || typeName.equals("World")) {
+                        field.setAccessible(true);
+                        world = field.get(mc);
+                        break;
+                    }
+                }
+            }
+            
+            if (world != null) {
+                // 🔍 Ищем тип частиц через рефлексию
+                Class<?> particleTypesClass = Class.forName("net.minecraft.particles.ParticleTypes");
+                java.lang.reflect.Field portalField = null;
+                
+                for (java.lang.reflect.Field f : particleTypesClass.getDeclaredFields()) {
+                    if (f.getName().toUpperCase().contains("PORTAL")) {
+                        portalField = f;
+                        break;
+                    }
+                }
+                
+                if (portalField != null) {
+                    portalField.setAccessible(true);
+                    Object portalParticle = portalField.get(null);
+                    
+                    // 🔍 Добавляем частицы через рефлексию
+                    for (int i = 0; i < 30; i++) {
+                        java.lang.reflect.Method addParticleMethod = world.getClass()
+                            .getMethod("addParticle", 
+                                Class.forName("net.minecraft.particles.IParticleData"),
+                                double.class, double.class, double.class,
+                                double.class, double.class, double.class);
+                        
+                        addParticleMethod.invoke(world, portalParticle,
+                            x + (Math.random() - 0.5) * 2,
+                            y + (Math.random() - 0.5) * 2,
+                            z + (Math.random() - 0.5) * 2,
+                            (Math.random() - 0.5) * 0.2,
+                            (Math.random() - 0.5) * 0.2,
+                            (Math.random() - 0.5) * 0.2
+                        );
+                    }
+                    System.out.println("[Visuals] Portal particles spawned at " + lastBrokenBlock);
+                }
             }
         } catch (Exception e) {
-            System.out.println("[Visuals] Failed to spawn particles: " + e.getMessage());
+            // Частицы опциональны - пропускаем если не найдены
+            System.out.println("[Visuals] Particles skipped: " + e.getMessage());
         }
     }
     
