@@ -4,6 +4,7 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.vs.vscombo.client.screen.widget.CustomButton;
 import com.vs.vscombo.client.screen.widget.MultiLineTextField;
 import com.vs.vscombo.client.screen.widget.SmallNumberField;
+import com.vs.vscombo.client.util.VSMainWindow;
 import com.vs.vscombo.util.MacroStorage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -201,69 +202,10 @@ public class TabMacros implements ITab {
     }
     
     /**
-     * ✅ Очистка чата (аналог F3+D) — универсальный метод
+     * ✅ Очистка чата через утилитный метод
      */
     private void clearChat() {
-        Minecraft mc = Minecraft.getInstance();
-        
-        // Пробуем очистить через доступные поля (разные маппинги)
-        try {
-            // Вариант для большинства сборок: через поле gui
-            java.lang.reflect.Field guiField = mc.getClass().getDeclaredField("gui");
-            guiField.setAccessible(true);
-            Object gui = guiField.get(mc);
-            
-            if (gui != null) {
-                // Ищем поле chat или chatGUI
-                java.lang.reflect.Field chatField = null;
-                try {
-                    chatField = gui.getClass().getDeclaredField("chat");
-                } catch (NoSuchFieldException e) {
-                    try {
-                        chatField = gui.getClass().getDeclaredField("chatGUI");
-                    } catch (NoSuchFieldException e2) {
-                        // Не найдено
-                    }
-                }
-                
-                if (chatField != null) {
-                    chatField.setAccessible(true);
-                    Object chatGUI = chatField.get(gui);
-                    
-                    if (chatGUI != null) {
-                        // Ищем метод очистки
-                        java.lang.reflect.Method clearMethod = null;
-                        try {
-                            clearMethod = chatGUI.getClass().getMethod("clearChatMessages", boolean.class);
-                            clearMethod.invoke(chatGUI, true);
-                        } catch (NoSuchMethodException e) {
-                            try {
-                                clearMethod = chatGUI.getClass().getMethod("resetChat");
-                                clearMethod.invoke(chatGUI);
-                            } catch (NoSuchMethodException e2) {
-                                // Метод не найден
-                            }
-                        }
-                        if (clearMethod != null) {
-                            System.out.println("[Macros] Chat cleared!");
-                            return;
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            // Игнорируем ошибки рефлексии
-        }
-        
-        // Фолбэк: отправляем команду очистки (работает на многих серверах)
-        if (mc.player != null && mc.player.connection != null) {
-            try {
-                mc.player.connection.send(new CChatMessagePacket("/clearchat"));
-                System.out.println("[Macros] Sent /clearchat");
-            } catch (Exception e) {
-                System.out.println("[Macros] Could not clear chat");
-            }
-        }
+        VSMainWindow.clearChatStatic();
     }
     
     private void executeMacros() {
