@@ -156,7 +156,7 @@ public class MultiLineTextField {
         if (!isFocused || !isEditable) return false;
         boolean ctrl = (modifiers & GLFW.GLFW_MOD_CONTROL) != 0;
         
-        // ✅ Ctrl+C/V/X/A — заглушка
+        // Ctrl+C/V/X/A — заглушка
         if (ctrl) {
             if (keyCode == GLFW.GLFW_KEY_C || keyCode == GLFW.GLFW_KEY_X || 
                 keyCode == GLFW.GLFW_KEY_V || keyCode == GLFW.GLFW_KEY_A) {
@@ -165,12 +165,12 @@ public class MultiLineTextField {
             }
         }
         
-        // ✅ Пробел — обрабатываем ПРЯМО ЗДЕСЬ, не передаём дальше
+        // ✅ Пробел — обрабатываем ПРЯМО ЗДЕСЬ
         if (keyCode == GLFW.GLFW_KEY_SPACE) {
             if (filter.test(text + " ")) {
                 insertText(" ");
             }
-            return true; // ✅ Важно: возвращаем true, чтобы родитель не обрабатывал!
+            return true;
         }
         
         // Навигация и специальные клавиши
@@ -227,19 +227,19 @@ public class MultiLineTextField {
         // Блокируем клавишу открытия мода (R = 82)
         if (keyCode == 82) return true;
         
-        // ✅ Буквы и цифры — обрабатываем в charTyped
+        // Буквы и цифры — обрабатываются в charTyped
         return false;
     }
     
     public boolean charTyped(char codePoint, int modifiers) {
         if (!isFocused || !isEditable) return false;
         
-        // ✅ Пробел уже обработан в handleKeyPress, пропускаем
+        // Пробел уже обработан в handleKeyPress
         if (codePoint == 32) {
             return true;
         }
         
-        // ✅ Разрешаем переносы строк (10, 13) и все printable символы >= 32
+        // Разрешаем переносы строк и все printable символы
         if (codePoint < 32 && codePoint != 10 && codePoint != 13) {
             return false;
         }
