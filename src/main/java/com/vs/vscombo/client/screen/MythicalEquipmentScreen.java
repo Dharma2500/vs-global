@@ -1,7 +1,6 @@
 package com.vs.vscombo.client.screen;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.vs.vscombo.client.screen.tabs.ITab;
 import com.vs.vscombo.client.screen.tabs.Tab1;
 import com.vs.vscombo.client.screen.tabs.Tab2;
@@ -33,8 +32,8 @@ public class MythicalEquipmentScreen extends Screen {
     private static final int BUTTON_SPACING = 4;
     
     // Прозрачность (0-255)
-    private static final int GLASS_ALPHA = 160;      // Стеклянные панели
-    private static final int DARKEN_ALPHA = 96;      // Затемнение фона (более прозрачное)
+    private static final int GLASS_ALPHA = 160;
+    private static final int DARKEN_ALPHA = 96;
     
     public MythicalEquipmentScreen() {
         super(new TranslationTextComponent("gui.vsglobal.mythical_equipment"));
@@ -108,7 +107,7 @@ public class MythicalEquipmentScreen extends Screen {
     
     @Override
     public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        // ✅ Затемнение фона (полупрозрачное чёрное)
+        // Затемнение фона (полупрозрачное чёрное)
         this.renderBackground(matrixStack);
         fill(matrixStack, 0, 0, this.width, this.height, 
             (DARKEN_ALPHA << 24) | 0x000000);
@@ -116,39 +115,39 @@ public class MythicalEquipmentScreen extends Screen {
         int guiLeft = (this.width - GUI_WIDTH) / 2;
         int guiTop = (this.height - GUI_HEIGHT) / 2;
         
-        // ✅ Основная стеклянная панель (фон GUI)
+        // Основная стеклянная панель (фон GUI)
         drawGlassPanel(matrixStack, guiLeft, guiTop, GUI_WIDTH, GUI_HEIGHT, GLASS_ALPHA);
         
-        // ✅ Заголовок
-        String title = "Mythical Equipment";
+        // ✅ Заголовок изменён на "Created by Vitaly_Sokolov"
+        String title = "Created by Vitaly_Sokolov";
         int titleWidth = this.font.width(title);
         this.font.draw(matrixStack, title, 
             (float)(guiLeft + (GUI_WIDTH - titleWidth) / 2), 
             (float)(guiTop + 12), 0xFFFFFFFF);
         
-        // ✅ Разделительная линия под заголовком
+        // Разделительная линия под заголовком
         fill(matrixStack, guiLeft + 10, guiTop + 28, guiLeft + GUI_WIDTH - 10, 
             guiTop + 30, 0x50FFFFFF);
         
-        // ✅ Боковая панель (левая)
+        // Боковая панель (левая)
         drawGlassPanel(matrixStack, guiLeft + 5, guiTop + 35, 
             SIDEBAR_WIDTH - 10, GUI_HEIGHT - 40, GLASS_ALPHA - 30);
         
-        // ✅ Область контента (правая часть)
+        // Область контента (правая часть)
         drawGlassPanel(matrixStack, guiLeft + SIDEBAR_WIDTH + 5, guiTop + 35, 
             GUI_WIDTH - SIDEBAR_WIDTH - 10, GUI_HEIGHT - 40, GLASS_ALPHA - 30);
         
         // Рендерим кнопки
         super.render(matrixStack, mouseX, mouseY, partialTicks);
         
-        // Подсветка активной кнопки
+        // ✅ Подсветка активной кнопки (только рамка, без полосок)
         for (int i = 0; i < tabButtons.length; i++) {
             boolean isActive = (currentTab == tabs[i]);
             if (isActive) {
-                // Подсветка активной кнопки (зелёная рамка)
+                // Зелёная рамка вокруг активной кнопки
                 drawBorder(matrixStack, 
-                    tabButtons[i].x - 2, tabButtons[i].y - 2,
-                    tabButtons[i].getWidth() + 4, tabButtons[i].getHeight() + 4,
+                    tabButtons[i].x - 1, tabButtons[i].y - 1,
+                    tabButtons[i].getWidth() + 2, tabButtons[i].getHeight() + 2,
                     0x8040FF40);
             }
         }
@@ -206,7 +205,7 @@ public class MythicalEquipmentScreen extends Screen {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         // Закрытие по ESC
-        if (keyCode == 256) { // GLFW_KEY_ESCAPE
+        if (keyCode == 256) {
             this.minecraft.setScreen(null);
             return true;
         }
@@ -226,6 +225,6 @@ public class MythicalEquipmentScreen extends Screen {
     
     @Override
     public boolean isPauseScreen() {
-        return false; // Игра не ставится на паузу
+        return false;
     }
 }
