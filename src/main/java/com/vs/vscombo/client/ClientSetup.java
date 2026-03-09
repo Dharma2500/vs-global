@@ -11,7 +11,7 @@ public class ClientSetup {
     
     @SubscribeEvent
     public static void clientSetup(FMLClientSetupEvent event) {
-        // ✅ Регистрируем клавиши
+        // ✅ Регистрируем клавиши в правильном событии
         ModKeyBindings.register();
     }
 }
