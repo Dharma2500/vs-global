@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 public class VSMainWindow {
     
     /**
-     * ✅ Очистка чата — точный поиск NewChatGui + игнорирование ложных срабатываний
+     * ✅ Очистка чата — поиск по всем полям с правильной фильтрацией
      * Вызов: VSMainWindow.clearChatStatic();
      */
     public static void clearChatStatic() {
@@ -13,45 +13,22 @@ public class VSMainWindow {
             Minecraft mc = Minecraft.getInstance();
             if (mc == null) return;
             
-            System.out.println("[Macros] === Starting targeted chat clear search ===");
+            System.out.println("[Macros] === Starting chat clear search ===");
             
-            // 🔍 1. Ищем объект типа NewChatGui (точный поиск по имени класса)
-            Object chat = findNewChatGui(mc, 4);
+            // 🔍 Ищем объект чата перебором всех полей
+            Object chat = findChatObject(mc, 5);
             
             if (chat != null) {
-                System.out.println("[Macros] Found NewChatGui object: " + chat.getClass().getName());
+                System.out.println("[Macros] Found chat object: " + chat.getClass().getName());
                 
-                // 🔍 2. Выводим ВСЕ методы класса для отладки
-                System.out.println("[Macros] === All methods in " + chat.getClass().getSimpleName() + " ===");
-                for (java.lang.reflect.Method method : chat.getClass().getDeclaredMethods()) {
-                    String name = method.getName().toLowerCase();
-                    if (name.contains("clear") || name.contains("reset") || name.contains("clean") || 
-                        name.contains("remove") || name.contains("delete") || name.contains("wipe")) {
-                        System.out.println("[Macros] Potential clear method: " + method.getName() + 
-                            java.util.Arrays.toString(method.getParameterTypes()));
-                    }
-                }
-                System.out.println("[Macros] === End of methods ===");
-                
-                // 🔍 3. Пробуем вызвать найденные методы
-                if (invokeKnownClearMethods(chat)) {
+                // 🔍 Вызываем метод очистки
+                if (invokeClearMethod(chat)) {
                     System.out.println("[Macros] ✅ Chat cleared successfully!");
                     return;
                 }
             }
             
-            // 🔍 4. Если не нашли — ищем через IngameGui.getChatGUI() (Forge API)
-            if (chat == null) {
-                chat = findChatViaForgeApi(mc);
-                if (chat != null) {
-                    if (invokeKnownClearMethods(chat)) {
-                        System.out.println("[Macros] ✅ Chat cleared via Forge API!");
-                        return;
-                    }
-                }
-            }
-            
-            System.err.println("[Macros] Could not find or clear NewChatGui object");
+            System.err.println("[Macros] Could not find or clear chat object");
             System.out.println("[Macros] === End of search ===");
             
         } catch (Exception e) {
@@ -61,47 +38,44 @@ public class VSMainWindow {
     }
     
     /**
-     * 🔍 Ищет объект класса NewChatGui рекурсивно
+     * 🔍 Рекурсивный поиск объекта чата
      */
-    private static Object findNewChatGui(Object obj, int depth) {
+    private static Object findChatObject(Object obj, int depth) {
         if (depth <= 0 || obj == null) return null;
         
         try {
             Class<?> clazz = obj.getClass();
             String className = clazz.getSimpleName();
+            String fullClassName = clazz.getName();
             
-            // ✅ Точная проверка: ищем именно NewChatGui
-            if (className.equals("NewChatGui") || className.contains("ChatGui")) {
-                // Игнорируем ложные срабатывания (CompletableFuture и др.)
-                if (!className.equals("CompletableFuture") && 
-                    !clazz.getName().startsWith("java.util.concurrent")) {
-                    System.out.println("[Macros] Found chat class: " + clazz.getName());
-                    return obj;
-                }
+            // ✅ Проверяем текущий объект (если это чат)
+            if (isChatClass(className, fullClassName)) {
+                System.out.println("[Macros] Found chat class: " + fullClassName);
+                return obj;
             }
             
-            // Перебираем все поля
+            // 🔍 Перебираем все поля
             for (java.lang.reflect.Field field : clazz.getDeclaredFields()) {
                 try {
                     field.setAccessible(true);
                     Object value = field.get(obj);
                     
                     if (value != null) {
-                        Class<?> valueClass = value.getClass();
-                        String valueClassName = valueClass.getSimpleName();
+                        String valueClassName = value.getClass().getSimpleName();
+                        String valueFullClassName = value.getClass().getName();
                         
-                        // ✅ Точная проверка значения
-                        if ((valueClassName.equals("NewChatGui") || valueClassName.contains("ChatGui")) &&
-                            !valueClassName.equals("CompletableFuture") &&
-                            !valueClass.getName().startsWith("java.util.concurrent")) {
+                        // ✅ Проверяем поле
+                        if (isChatClass(valueClassName, valueFullClassName)) {
                             System.out.println("[Macros] Found via field: " + field.getName() + 
-                                " -> " + valueClassName);
+                                " -> " + valueFullClassName);
                             return value;
                         }
                         
-                        // Рекурсивный поиск
-                        Object found = findNewChatGui(value, depth - 1);
-                        if (found != null) return found;
+                        // 🔁 Рекурсивный поиск (но не в примитивах и строках)
+                        if (!isPrimitiveOrCommon(valueClassName)) {
+                            Object found = findChatObject(value, depth - 1);
+                            if (found != null) return found;
+                        }
                     }
                 } catch (Exception ignored) {}
             }
@@ -111,56 +85,77 @@ public class VSMainWindow {
     }
     
     /**
-     * 🔍 Пытается получить чат через Forge API: ingameGUI.getChatGUI()
+     * ✅ Проверяет, является ли класс классом чата
      */
-    private static Object findChatViaForgeApi(Minecraft mc) {
-        try {
-            // Ищем поле ingameGUI или gui
-            Object gui = null;
-            for (java.lang.reflect.Field field : mc.getClass().getDeclaredFields()) {
-                String typeName = field.getType().getSimpleName();
-                if (typeName.equals("IngameGUI") || typeName.equals("IngameGui")) {
-                    field.setAccessible(true);
-                    gui = field.get(mc);
-                    break;
-                }
-            }
-            
-            if (gui != null) {
-                // Пытаемся вызвать getChatGUI()
-                try {
-                    java.lang.reflect.Method getChatMethod = gui.getClass().getMethod("getChatGUI");
-                    Object chat = getChatMethod.invoke(gui);
-                    if (chat != null) {
-                        System.out.println("[Macros] Found chat via getChatGUI(): " + chat.getClass().getName());
-                        return chat;
-                    }
-                } catch (NoSuchMethodException ignored) {
-                    // Метода нет, ищем поле chat
-                    for (java.lang.reflect.Field field : gui.getClass().getDeclaredFields()) {
-                        String typeName = field.getType().getSimpleName();
-                        if (typeName.equals("NewChatGui") || typeName.equals("ChatGui")) {
-                            field.setAccessible(true);
-                            Object chat = field.get(gui);
-                            if (chat != null) {
-                                System.out.println("[Macros] Found chat field in GUI: " + field.getName());
-                                return chat;
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (Exception ignored) {}
-        return null;
+    private static boolean isChatClass(String className, String fullClassName) {
+        // Игнорируем java.util.concurrent и другие системные классы
+        if (fullClassName.startsWith("java.util.concurrent") ||
+            fullClassName.startsWith("java.lang") ||
+            className.equals("CompletableFuture") ||
+            className.equals("String") ||
+            className.equals("Integer") ||
+            className.equals("Boolean") ||
+            className.equals("Float") ||
+            className.equals("Double")) {
+            return false;
+        }
+        
+        // ✅ Ищем классы содержащие "Chat" в имени
+        String lowerName = className.toLowerCase();
+        if (lowerName.contains("chat") && 
+            (lowerName.contains("gui") || lowerName.contains("screen"))) {
+            return true;
+        }
+        
+        // ✅ Специфичные имена классов чата
+        if (className.equals("NewChatGui") || 
+            className.equals("ChatGui") || 
+            className.equals("ChatScreen") ||
+            className.equals("GuiChat")) {
+            return true;
+        }
+        
+        return false;
     }
     
     /**
-     * ✅ Вызывает известные методы очистки чата
+     * ✅ Проверяет, является ли тип примитивом или распространённым типом
      */
-    private static boolean invokeKnownClearMethods(Object chat) {
+    private static boolean isPrimitiveOrCommon(String className) {
+        return className.equals("String") ||
+               className.equals("Integer") ||
+               className.equals("Int") ||
+               className.equals("Boolean") ||
+               className.equals("Float") ||
+               className.equals("Double") ||
+               className.equals("Long") ||
+               className.equals("Short") ||
+               className.equals("Byte") ||
+               className.equals("Char") ||
+               className.equals("Object") ||
+               className.equals("Class") ||
+               className.equals("Thread") ||
+               className.equals("Runnable") ||
+               className.equals("Callable") ||
+               className.equals("Future") ||
+               className.equals("CompletableFuture") ||
+               className.equals("Optional") ||
+               className.equals("Stream") ||
+               className.equals("List") ||
+               className.equals("ArrayList") ||
+               className.equals("Map") ||
+               className.equals("HashMap") ||
+               className.equals("Set") ||
+               className.equals("HashSet");
+    }
+    
+    /**
+     * ✅ Вызывает метод очистки чата
+     */
+    private static boolean invokeClearMethod(Object chat) {
         if (chat == null) return false;
         
-        // Список известных методов очистки в порядке приоритета
+        // Список методов в порядке приоритета
         String[] methodNames = {
             "clearMessages", "resetChat", "clearChat", "cleanChat", 
             "removeAllMessages", "deleteMessages", "wipeChat", "clear"
@@ -189,6 +184,18 @@ public class VSMainWindow {
                 System.out.println("[Macros] Failed to invoke " + methodName + ": " + e.getMessage());
             }
         }
+        
+        // 🔍 Если не нашли стандартные методы, выводим все доступные методы для отладки
+        System.out.println("[Macros] === All methods in " + chat.getClass().getSimpleName() + " ===");
+        for (java.lang.reflect.Method method : chat.getClass().getDeclaredMethods()) {
+            String name = method.getName().toLowerCase();
+            if (name.contains("clear") || name.contains("reset") || name.contains("clean") || 
+                name.contains("remove") || name.contains("delete") || name.contains("wipe")) {
+                System.out.println("[Macros] Potential method: " + method.getName() + 
+                    java.util.Arrays.toString(method.getParameterTypes()));
+            }
+        }
+        System.out.println("[Macros] === End of methods ===");
         
         return false;
     }
