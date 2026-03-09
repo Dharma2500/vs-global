@@ -55,9 +55,9 @@ public class MultiLineTextField {
         AbstractGui.fill(matrixStack, x + width - 1, y, x + width, y + height, 0xFF303050);
         AbstractGui.fill(matrixStack, x, y + height - 1, x + width, y + height, 0xFF303050);
         
+        // ✅ Mojang 1.16.5: getMainWindow() для handle
         Minecraft mc = Minecraft.getInstance();
-        // ✅ Mojang: getWindow().getGuiScaledHeight()
-        RenderSystem.enableScissor(x + 1, mc.getWindow().getGuiScaledHeight() - (y + height - 1), width - 2, height - 2);
+        RenderSystem.enableScissor(x + 1, mc.getMainWindow().getScaledHeight() - (y + height - 1), width - 2, height - 2);
         
         renderText(matrixStack);
         renderCursor(matrixStack);
@@ -174,18 +174,18 @@ public class MultiLineTextField {
         if (keyCode == GLFW.GLFW_KEY_END) { moveToLineEnd(); return true; }
         if (ctrl && keyCode == GLFW.GLFW_KEY_A) { selectionStart = 0; cursorPos = text.length(); return true; }
         
-        // ✅ Clipboard через GLFW (универсальный способ)
+        // ✅ Clipboard: используем getMainWindow().getHandle()
         if (ctrl && (keyCode == GLFW.GLFW_KEY_C || keyCode == GLFW.GLFW_KEY_X)) {
             if (hasSelection()) {
                 String selected = getSelectedText();
-                long handle = Minecraft.getInstance().getWindow().getHandle();
+                long handle = Minecraft.getInstance().getMainWindow().getHandle();
                 GLFW.glfwSetClipboardString(handle, selected);
                 if (keyCode == GLFW.GLFW_KEY_X) deleteSelection();
             }
             return true;
         }
         if (ctrl && keyCode == GLFW.GLFW_KEY_V) {
-            long handle = Minecraft.getInstance().getWindow().getHandle();
+            long handle = Minecraft.getInstance().getMainWindow().getHandle();
             String clipboard = GLFW.glfwGetClipboardString(handle);
             if (clipboard != null && !clipboard.isEmpty()) insertText(clipboard);
             return true;
