@@ -179,4 +179,11 @@ public class MythicalEquipmentScreen extends Screen {
     public boolean shouldCloseOnEsc() { return true; }
     @Override
     public boolean isPauseScreen() { return false; }
+
+    @Override
+    public boolean charTyped(char codePoint, int modifiers) {
+        if (currentTab != null && currentTab.charTyped(codePoint, modifiers)) {
+            return true;
+        }
+        return super.charTyped(codePoint, modifiers);
 }
