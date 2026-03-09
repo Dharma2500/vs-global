@@ -1,15 +1,14 @@
 package com.vs.vscombo.client.screen.tabs;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.Minecraft;
 
 public class Tab3 implements ITab {
     @Override
-    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        Minecraft mc = Minecraft.getInstance();
-        mc.font.draw(matrixStack, "Content of Tab 3", 10f, 10f, 0xFFFFFF);
-        mc.font.draw(matrixStack, "This is test3 tab content", 10f, 25f, 0xAAAAAA);
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, 
+                       float partialTicks, int contentX, int contentY) {
+        net.minecraft.client.Minecraft.getInstance().font.draw(matrixStack, 
+            "§6§lArtifacts", (float)contentX, (float)contentY, 0xFFD4AF37);
     }
     @Override public String getTabId() { return "tab3"; }
-    @Override public String getTabName() { return "test3"; }
+    @Override public String getTabName() { return "Artifacts"; }
 }
