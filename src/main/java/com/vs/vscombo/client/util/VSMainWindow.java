@@ -1,74 +1,103 @@
 package com.vs.vscombo.client.util;
 
 import net.minecraft.client.Minecraft;
+import org.lwjgl.glfw.GLFW;
 
 public class VSMainWindow {
     
     /**
-     * ✅ Очистка чата (аналог F3+D) — универсальный метод с рефлексией
+     * ✅ Очистка чата (аналог F3+D) — через симуляцию нажатия клавиш
      * Вызов: VSMainWindow.clearChatStatic();
      */
     public static void clearChatStatic() {
         try {
             Minecraft mc = Minecraft.getInstance();
+            if (mc == null || mc.keyboardListener == null) return;
+            
+            long windowHandle = mc.getMainWindow().getHandle();
+            
+            // Симулируем нажатие F3 (левый модификатор)
+            GLFW.glfwSetKeyModifier(windowHandle, GLFW.GLFW_KEY_LEFT_ALT, GLFW.GLFW_PRESS);
+            
+            // Симулируем нажатие D
+            GLFW.glfwSetKey(windowHandle, GLFW.GLFW_KEY_D, GLFW.GLFW_PRESS, 0);
+            GLFW.glfwSetKey(windowHandle, GLFW.GLFW_KEY_D, GLFW.GLFW_RELEASE, 0);
+            
+            // Снимаем модификатор
+            GLFW.glfwSetKeyModifier(windowHandle, GLFW.GLFW_KEY_LEFT_ALT, GLFW.GLFW_RELEASE);
+            
+            // Принудительно обрабатываем события (опционально)
+            GLFW.glfwPollEvents();
+            
+        } catch (Exception e) {
+            // Если не вышло — пробуем альтернативу через рефлексию
+            clearChatFallback();
+        }
+    }
+    
+    /**
+     * Фолбэк-метод очистки через рефлексию (если симуляция клавиш не сработала)
+     */
+    private static void clearChatFallback() {
+        try {
+            Minecraft mc = Minecraft.getInstance();
             if (mc == null) return;
             
-            // Пробуем разные варианты имён полей для разных маппингов
+            // Пробуем разные варианты имён полей
             Object gui = null;
-            
-            // Вариант 1: поле "gui" (Mojang Mappings)
             try {
-                java.lang.reflect.Field guiField = mc.getClass().getDeclaredField("gui");
-                guiField.setAccessible(true);
-                gui = guiField.get(mc);
-            } catch (NoSuchFieldException e1) {
-                // Вариант 2: поле "ingameGUI" (Forge Mappings)
+                java.lang.reflect.Field f = mc.getClass().getDeclaredField("gui");
+                f.setAccessible(true);
+                gui = f.get(mc);
+            } catch (NoSuchFieldException e) {
                 try {
-                    java.lang.reflect.Field guiField = mc.getClass().getDeclaredField("ingameGUI");
-                    guiField.setAccessible(true);
-                    gui = guiField.get(mc);
+                    java.lang.reflect.Field f = mc.getClass().getDeclaredField("ingameGUI");
+                    f.setAccessible(true);
+                    gui = f.get(mc);
                 } catch (NoSuchFieldException e2) {
-                    // Поле не найдено
                     return;
                 }
             }
             
             if (gui == null) return;
             
-            // Ищем поле чата: "chat" или "chatGUI"
-            Object chatGUI = null;
+            Object chat = null;
             try {
-                java.lang.reflect.Field chatField = gui.getClass().getDeclaredField("chat");
-                chatField.setAccessible(true);
-                chatGUI = chatField.get(gui);
-            } catch (NoSuchFieldException e1) {
+                java.lang.reflect.Field f = gui.getClass().getDeclaredField("chat");
+                f.setAccessible(true);
+                chat = f.get(gui);
+            } catch (NoSuchFieldException e) {
                 try {
-                    java.lang.reflect.Field chatField = gui.getClass().getDeclaredField("chatGUI");
-                    chatField.setAccessible(true);
-                    chatGUI = chatField.get(gui);
+                    java.lang.reflect.Field f = gui.getClass().getDeclaredField("chatGUI");
+                    f.setAccessible(true);
+                    chat = f.get(gui);
                 } catch (NoSuchFieldException e2) {
-                    // Поле чата не найдено
                     return;
                 }
             }
             
-            if (chatGUI == null) return;
+            if (chat == null) return;
             
-            // Ищем метод очистки: clearChatMessages(boolean) или resetChat()
+            // Пробуем разные имена методов очистки
             try {
-                java.lang.reflect.Method clearMethod = chatGUI.getClass().getMethod("clearChatMessages", boolean.class);
-                clearMethod.invoke(chatGUI, true);
-            } catch (NoSuchMethodException e1) {
+                java.lang.reflect.Method m = chat.getClass().getMethod("clearMessages", boolean.class);
+                m.invoke(chat, true);
+            } catch (NoSuchMethodException e) {
                 try {
-                    java.lang.reflect.Method clearMethod = chatGUI.getClass().getMethod("resetChat");
-                    clearMethod.invoke(chatGUI);
+                    java.lang.reflect.Method m = chat.getClass().getMethod("clearChatMessages", boolean.class);
+                    m.invoke(chat, true);
                 } catch (NoSuchMethodException e2) {
-                    // Метод очистки не найден
+                    try {
+                        java.lang.reflect.Method m = chat.getClass().getMethod("resetChat");
+                        m.invoke(chat);
+                    } catch (NoSuchMethodException e3) {
+                        // Метод не найден
+                    }
                 }
             }
             
         } catch (Exception e) {
-            // Игнорируем ошибки рефлексии — чат не очистится, но мод продолжит работать
+            // Игнорируем — чат не очистится, но мод продолжит работать
         }
     }
 }
