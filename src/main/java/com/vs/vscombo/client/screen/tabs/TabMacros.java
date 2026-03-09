@@ -6,10 +6,8 @@ import com.vs.vscombo.client.screen.widget.MultiLineTextField;
 import com.vs.vscombo.client.screen.widget.SmallNumberField;
 import com.vs.vscombo.util.MacroStorage;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.util.text.StringTextComponent;
-
-import java.io.File;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.network.play.client.CChatMessagePacket;
 
 public class TabMacros implements ITab {
     
@@ -23,6 +21,7 @@ public class TabMacros implements ITab {
     private boolean isRunning = false;
     private Thread executionThread;
     private int contentX, contentY;
+    private FontRenderer font;
     
     private static final int TEXT_WIDTH = 340;
     private static final int TEXT_HEIGHT = 120;
@@ -33,20 +32,20 @@ public class TabMacros implements ITab {
     
     @Override
     public void init(Minecraft minecraft, int width, int height) {
-        // Позиции относительно области контента
+        this.font = minecraft.font;
         int textX = contentX;
         int textY = contentY;
         
         // ✅ Многострочный текстовый редактор
         this.textField = new MultiLineTextField(
-            minecraft.font,
+            font,
             textX, textY,
             TEXT_WIDTH, TEXT_HEIGHT,
-            new StringTextComponent("Enter macros here...")
+            new net.minecraft.util.text.StringTextComponent("Enter macros here...")
         );
         
         // Загружаем сохранённые макросы
-        File macroFile = MacroStorage.getMacroFile();
+        java.io.File macroFile = MacroStorage.getMacroFile();
         if (macroFile.exists()) {
             String saved = MacroStorage.loadMacros();
             if (saved != null && !saved.isEmpty()) {
@@ -59,7 +58,7 @@ public class TabMacros implements ITab {
             contentX + TEXT_WIDTH - BUTTON_WIDTH,
             contentY + TEXT_HEIGHT + 10,
             BUTTON_WIDTH, BUTTON_HEIGHT,
-            new StringTextComponent("Execute"),
+            new net.minecraft.util.text.StringTextComponent("Execute"),
             btn -> executeMacros()
         );
         
@@ -68,7 +67,7 @@ public class TabMacros implements ITab {
             contentX,
             contentY + TEXT_HEIGHT + 10,
             50, BUTTON_HEIGHT,
-            new StringTextComponent("Start"),
+            new net.minecraft.util.text.StringTextComponent("Start"),
             btn -> startLoop()
         );
         
@@ -76,28 +75,28 @@ public class TabMacros implements ITab {
             contentX + 55,
             contentY + TEXT_HEIGHT + 10,
             50, BUTTON_HEIGHT,
-            new StringTextComponent("Stop"),
+            new net.minecraft.util.text.StringTextComponent("Stop"),
             btn -> stopLoop()
         );
         this.stopButton.active = false;
         
         // ✅ Поля для чисел (рядом с кнопками)
         this.loopCountField = new SmallNumberField(
-            minecraft.font,
+            font,
             contentX + 110,
             contentY + TEXT_HEIGHT + 12,
             SMALL_FIELD_WIDTH, SMALL_FIELD_HEIGHT,
-            new StringTextComponent("1")
+            new net.minecraft.util.text.StringTextComponent("1")
         );
         this.loopCountField.setMaxLength(4);
         this.loopCountField.setFilter(s -> s.matches("\\d*"));
         
         this.intervalField = new SmallNumberField(
-            minecraft.font,
+            font,
             contentX + 165,
             contentY + TEXT_HEIGHT + 12,
             SMALL_FIELD_WIDTH, SMALL_FIELD_HEIGHT,
-            new StringTextComponent("1000")
+            new net.minecraft.util.text.StringTextComponent("1000")
         );
         this.intervalField.setMaxLength(5);
         this.intervalField.setFilter(s -> s.matches("\\d*"));
@@ -124,13 +123,12 @@ public class TabMacros implements ITab {
         if (intervalField != null) intervalField.render(matrixStack, mouseX, mouseY, partialTicks);
         
         // Подписи к полям
-        Minecraft mc = Minecraft.getInstance();
-        mc.font.draw(matrixStack, "Loops:", (float)(contentX + 110), (float)(contentY + TEXT_HEIGHT + 5), 0xFFFFFF);
-        mc.font.draw(matrixStack, "ms:", (float)(contentX + 165), (float)(contentY + TEXT_HEIGHT + 5), 0xFFFFFF);
+        font.draw(matrixStack, "Loops:", (float)(contentX + 110), (float)(contentY + TEXT_HEIGHT + 5), 0xFFFFFF);
+        font.draw(matrixStack, "ms:", (float)(contentX + 165), (float)(contentY + TEXT_HEIGHT + 5), 0xFFFFFF);
         
         // Индикатор состояния
         String status = isRunning ? "§aRunning..." : "§7Stopped";
-        mc.font.draw(matrixStack, status, (float)(contentX + 220), (float)(contentY + TEXT_HEIGHT + 15), 0xFFFFFF);
+        font.draw(matrixStack, status, (float)(contentX + 220), (float)(contentY + TEXT_HEIGHT + 15), 0xFFFFFF);
     }
     
     @Override
@@ -138,7 +136,6 @@ public class TabMacros implements ITab {
         boolean handled = false;
         
         if (textField != null) {
-            // ✅ Важно: текстовое поле должно получать фокус и обрабатывать клики
             handled = textField.mouseClicked(mouseX, mouseY, button) || handled;
         }
         if (executeButton != null) {
@@ -162,9 +159,8 @@ public class TabMacros implements ITab {
     
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        // ✅ Если фокус на текстовом поле — передаём ввод туда
+        // Если фокус на текстовом поле — передаём ввод туда
         if (textField != null && textField.isFocused()) {
-            // ✅ Блокируем клавишу открытия мода (R) — она не должна вводить символы
             if (textField.handleKeyPress(keyCode, scanCode, modifiers)) {
                 // Автосохранение после каждого изменения
                 MacroStorage.saveMacros(textField.getText());
@@ -185,7 +181,7 @@ public class TabMacros implements ITab {
     
     @Override
     public boolean charTyped(char codePoint, int modifiers) {
-        // ✅ Обработка ввода символов в текстовое поле
+        // Обработка ввода символов в текстовое поле
         if (textField != null && textField.isFocused()) {
             if (textField.charTyped(codePoint, modifiers)) {
                 MacroStorage.saveMacros(textField.getText());
@@ -218,13 +214,8 @@ public class TabMacros implements ITab {
         for (String line : lines) {
             line = line.trim();
             if (!line.isEmpty()) {
-                if (line.startsWith("/")) {
-                    // Команда
-                    mc.player.connection.sendCommand(line.substring(1));
-                } else {
-                    // Сообщение в чат
-                    mc.player.connection.sendChat(line);
-                }
+                // ✅ 1.16.5: отправляем через CChatMessagePacket
+                mc.player.connection.sendPacket(new CChatMessagePacket(line));
             }
         }
     }
@@ -236,18 +227,35 @@ public class TabMacros implements ITab {
         if (isRunning || textField == null) return;
         
         try {
-            int loops = Integer.parseInt(loopCountField.getText().isEmpty() ? "1" : loopCountField.getText());
-            int interval = Integer.parseInt(intervalField.getText().isEmpty() ? "1000" : intervalField.getText());
+            int loops = 1;
+            int interval = 1000;
+            
+            try {
+                String loopText = loopCountField.getText();
+                if (loopText != null && !loopText.isEmpty()) {
+                    loops = Integer.parseInt(loopText);
+                }
+            } catch (NumberFormatException ignored) {}
+            
+            try {
+                String intervalText = intervalField.getText();
+                if (intervalText != null && !intervalText.isEmpty()) {
+                    interval = Integer.parseInt(intervalText);
+                }
+            } catch (NumberFormatException ignored) {}
             
             isRunning = true;
             startButton.active = false;
             stopButton.active = true;
             
+            final int finalLoops = loops;
+            final int finalInterval = interval;
+            
             executionThread = new Thread(() -> {
                 String text = textField.getText();
                 String[] lines = text.split("\n");
                 
-                for (int loop = 0; loop < loops && isRunning; loop++) {
+                for (int loop = 0; loop < finalLoops && isRunning; loop++) {
                     for (String line : lines) {
                         if (!isRunning) break;
                         
@@ -255,18 +263,15 @@ public class TabMacros implements ITab {
                         if (!line.isEmpty()) {
                             Minecraft mc = Minecraft.getInstance();
                             if (mc.player != null && mc.player.connection != null) {
-                                if (line.startsWith("/")) {
-                                    mc.player.connection.sendCommand(line.substring(1));
-                                } else {
-                                    mc.player.connection.sendChat(line);
-                                }
+                                // ✅ 1.16.5: отправляем через CChatMessagePacket
+                                mc.player.connection.sendPacket(new CChatMessagePacket(line));
                             }
                         }
                     }
                     
-                    if (isRunning && loop < loops - 1) {
+                    if (isRunning && loop < finalLoops - 1) {
                         try {
-                            Thread.sleep(interval);
+                            Thread.sleep(finalInterval);
                         } catch (InterruptedException e) {
                             break;
                         }
@@ -280,10 +285,13 @@ public class TabMacros implements ITab {
                     stopButton.active = false;
                 });
             });
+            executionThread.setDaemon(true);
             executionThread.start();
             
-        } catch (NumberFormatException e) {
-            // Неверный формат числа — игнорируем
+        } catch (Exception e) {
+            isRunning = false;
+            startButton.active = true;
+            stopButton.active = false;
         }
     }
     
@@ -295,8 +303,13 @@ public class TabMacros implements ITab {
         if (executionThread != null && executionThread.isAlive()) {
             executionThread.interrupt();
         }
+        startButton.active = true;
+        stopButton.active = false;
     }
     
-    @Override public String getTabId() { return "tab1"; }
-    @Override public String getTabName() { return "Macros"; }
+    @Override 
+    public String getTabId() { return "tab1"; }
+    
+    @Override 
+    public String getTabName() { return "Macros"; }
 }
