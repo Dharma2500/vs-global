@@ -2,7 +2,7 @@ package com.vs.vscombo.client.keybind;
 
 import com.vs.vscombo.VSGlobalMod;
 import com.vs.vscombo.client.screen.MythicalEquipmentScreen;
-import net.minecraft.client.Minecraft; // ✅ Импорт
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
 import net.minecraftforge.api.distmarker.Dist;
@@ -17,10 +17,11 @@ public class ModKeyBindings {
     public static KeyBinding openGuiKey;
     
     public static void register() {
+        // ✅ 1.16.5: KEY_R = 82 (GLFW key code), используем конструктор с int
         openGuiKey = new KeyBinding(
             "key.vscombo.open_gui",
             InputMappings.Type.KEYSYM,
-            InputMappings.KEY_R, // ✅ 1.16.5: константа прямо в InputMappings
+            82, // GLFW_KEY_R
             "key.categories.vscombo"
         );
         ClientRegistry.registerKeyBinding(openGuiKey);
@@ -28,9 +29,8 @@ public class ModKeyBindings {
     
     @SubscribeEvent
     public static void onKeyInput(InputEvent.KeyInputEvent event) {
-        // ✅ 1.16.5: инстанс-метод isPressed()
-        if (openGuiKey.isPressed()) {
-            // ✅ 1.16.5: метод setScreen(), а не displayGuiScreen
+        // ✅ 1.16.5: isDown() вместо isPressed()
+        if (openGuiKey.isDown()) {
             Minecraft.getInstance().setScreen(new MythicalEquipmentScreen());
         }
     }
