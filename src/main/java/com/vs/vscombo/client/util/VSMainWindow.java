@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 public class VSMainWindow {
     
     /**
-     * ✅ Очистка чата (аналог F3+D) — для официальных маппингов Mojang 1.16.5
+     * ✅ Очистка чата (аналог F3+D) — с рефлексией для protected полей
      * Вызов: VSMainWindow.clearChatStatic();
      */
     public static void clearChatStatic() {
@@ -13,28 +13,46 @@ public class VSMainWindow {
             Minecraft mc = Minecraft.getInstance();
             if (mc == null) return;
             
-            // ✅ Mojang Mappings 1.16.5: прямой доступ к полям
-            // mc.gui -> ChatGui -> clearMessages(true)
-            if (mc.gui != null && mc.gui.chat != null) {
-                mc.gui.chat.clearMessages(true);
-            }
+            // Получаем поле gui через рефлексию
+            java.lang.reflect.Field guiField = Minecraft.class.getDeclaredField("gui");
+            guiField.setAccessible(true);
+            Object gui = guiField.get(mc);
+            
+            if (gui == null) return;
+            
+            // Получаем защищённое поле chat через рефлексию
+            java.lang.reflect.Field chatField = gui.getClass().getDeclaredField("chat");
+            chatField.setAccessible(true);
+            Object chat = chatField.get(gui);
+            
+            if (chat == null) return;
+            
+            // Вызываем метод clearMessages(boolean)
+            java.lang.reflect.Method clearMethod = chat.getClass().getMethod("clearMessages", boolean.class);
+            clearMethod.invoke(chat, true);
+            
         } catch (Exception e) {
-            // Фолбэк через рефлексию (на случай обфускации)
+            // Если не вышло — пробуем альтернативные имена методов/полей
             try {
+                Minecraft mc = Minecraft.getInstance();
+                if (mc == null) return;
+                
                 java.lang.reflect.Field guiField = Minecraft.class.getDeclaredField("gui");
                 guiField.setAccessible(true);
-                Object gui = guiField.get(Minecraft.getInstance());
+                Object gui = guiField.get(mc);
                 
-                if (gui != null) {
-                    java.lang.reflect.Field chatField = gui.getClass().getDeclaredField("chat");
-                    chatField.setAccessible(true);
-                    Object chat = chatField.get(gui);
-                    
-                    if (chat != null) {
-                        java.lang.reflect.Method clearMethod = chat.getClass().getMethod("clearMessages", boolean.class);
-                        clearMethod.invoke(chat, true);
-                    }
-                }
+                if (gui == null) return;
+                
+                java.lang.reflect.Field chatField = gui.getClass().getDeclaredField("chat");
+                chatField.setAccessible(true);
+                Object chat = chatField.get(gui);
+                
+                if (chat == null) return;
+                
+                // Пробуем альтернативное имя метода
+                java.lang.reflect.Method clearMethod = chat.getClass().getMethod("resetChat");
+                clearMethod.invoke(chat);
+                
             } catch (Exception e2) {
                 // Не удалось очистить чат
                 System.out.println("[Macros] Could not clear chat: " + e2.getMessage());
