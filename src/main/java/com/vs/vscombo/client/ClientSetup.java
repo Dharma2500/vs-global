@@ -1,5 +1,6 @@
 package com.vs.vscombo.client;
 
+import com.vs.vscombo.client.keybind.ModKeyBindings;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -10,6 +11,7 @@ public class ClientSetup {
     
     @SubscribeEvent
     public static void clientSetup(FMLClientSetupEvent event) {
-        // Клиентская инициализация
+        // ✅ Регистрируем клавиши
+        ModKeyBindings.register();
     }
 }
