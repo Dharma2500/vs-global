@@ -9,6 +9,7 @@ import com.vs.vscombo.client.screen.tabs.Tab4;
 import com.vs.vscombo.client.screen.tabs.Tab5;
 import com.vs.vscombo.client.screen.widget.CustomButton;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -24,14 +25,12 @@ public class MythicalEquipmentScreen extends Screen {
     private CustomButton closeButton;
     private CustomButton settingsButton;
     
-    // Размеры GUI
     private static final int GUI_WIDTH = 512;
     private static final int GUI_HEIGHT = 320;
     private static final int SIDEBAR_WIDTH = 120;
     private static final int BUTTON_HEIGHT = 24;
     private static final int BUTTON_SPACING = 4;
     
-    // Прозрачность (0-255)
     private static final int GLASS_ALPHA = 160;
     private static final int DARKEN_ALPHA = 96;
     
@@ -50,31 +49,20 @@ public class MythicalEquipmentScreen extends Screen {
         int guiLeft = (this.width - GUI_WIDTH) / 2;
         int guiTop = (this.height - GUI_HEIGHT) / 2;
         
-        // ✅ Кнопка закрытия (X) - CustomButton
         this.closeButton = new CustomButton(
-            guiLeft + GUI_WIDTH - 28,
-            guiTop + 6,
-            22,
-            22,
+            guiLeft + GUI_WIDTH - 28, guiTop + 6, 22, 22,
             new StringTextComponent("X"),
             button -> this.minecraft.setScreen(null)
         );
         this.addButton(this.closeButton);
         
-        // ✅ Кнопка настроек (⚙) - CustomButton
         this.settingsButton = new CustomButton(
-            guiLeft + 6,
-            guiTop + 6,
-            22,
-            22,
+            guiLeft + 6, guiTop + 6, 22, 22,
             new StringTextComponent("⚙"),
-            button -> {
-                // TODO: Открыть настройки
-            }
+            button -> {}
         );
         this.addButton(this.settingsButton);
         
-        // ✅ Кнопки вкладок слева - CustomButton
         this.tabButtons = new CustomButton[5];
         String[] tabNames = {"Weapons", "Armor", "Artifacts", "Creatures", "Bosses"};
         
@@ -107,44 +95,34 @@ public class MythicalEquipmentScreen extends Screen {
     
     @Override
     public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        // Затемнение фона (полупрозрачное чёрное)
         this.renderBackground(matrixStack);
-        fill(matrixStack, 0, 0, this.width, this.height, 
+        AbstractGui.fill(matrixStack, 0, 0, this.width, this.height, 
             (DARKEN_ALPHA << 24) | 0x000000);
         
         int guiLeft = (this.width - GUI_WIDTH) / 2;
         int guiTop = (this.height - GUI_HEIGHT) / 2;
         
-        // Основная стеклянная панель (фон GUI)
         drawGlassPanel(matrixStack, guiLeft, guiTop, GUI_WIDTH, GUI_HEIGHT, GLASS_ALPHA);
         
-        // Заголовок
         String title = "Created by Vitaly_Sokolov";
         int titleWidth = this.font.width(title);
         this.font.draw(matrixStack, title, 
             (float)(guiLeft + (GUI_WIDTH - titleWidth) / 2), 
             (float)(guiTop + 12), 0xFFFFFFFF);
         
-        // Разделительная линия под заголовком
-        fill(matrixStack, guiLeft + 10, guiTop + 28, guiLeft + GUI_WIDTH - 10, 
+        AbstractGui.fill(matrixStack, guiLeft + 10, guiTop + 28, guiLeft + GUI_WIDTH - 10, 
             guiTop + 30, 0x50FFFFFF);
         
-        // Боковая панель (левая)
         drawGlassPanel(matrixStack, guiLeft + 5, guiTop + 35, 
             SIDEBAR_WIDTH - 10, GUI_HEIGHT - 40, GLASS_ALPHA - 30);
         
-        // Область контента (правая часть)
         drawGlassPanel(matrixStack, guiLeft + SIDEBAR_WIDTH + 5, guiTop + 35, 
             GUI_WIDTH - SIDEBAR_WIDTH - 10, GUI_HEIGHT - 40, GLASS_ALPHA - 30);
         
-        // ✅ Рендерим кнопки (теперь без белых полосок)
         super.render(matrixStack, mouseX, mouseY, partialTicks);
         
-        // ✅ Подсветка активной вкладки (только рамка)
         for (int i = 0; i < tabButtons.length; i++) {
-            boolean isActive = (currentTab == tabs[i]);
-            if (isActive) {
-                // Зелёная рамка вокруг активной кнопки
+            if (currentTab == tabs[i]) {
                 drawBorder(matrixStack, 
                     tabButtons[i].x - 1, tabButtons[i].y - 1,
                     tabButtons[i].getWidth() + 2, tabButtons[i].getHeight() + 2,
@@ -152,7 +130,6 @@ public class MythicalEquipmentScreen extends Screen {
             }
         }
         
-        // Рендерим содержимое текущей вкладки (пустое)
         if (currentTab != null) {
             int contentX = guiLeft + SIDEBAR_WIDTH + 15;
             int contentY = guiTop + 45;
@@ -160,33 +137,20 @@ public class MythicalEquipmentScreen extends Screen {
         }
     }
     
-    /**
-     * Рисует стеклянную панель с прозрачностью
-     */
-    private void drawGlassPanel(MatrixStack matrixStack, int x, int y, 
-                                 int width, int height, int alpha) {
+    private void drawGlassPanel(MatrixStack matrixStack, int x, int y, int width, int height, int alpha) {
         int backgroundColor = (alpha << 24) | 0x1A1A2E;
-        fill(matrixStack, x, y, x + width, y + height, backgroundColor);
-        
-        // Граница сверху (светлая)
-        fill(matrixStack, x, y, x + width, y + 1, 0x70FFFFFF);
-        // Граница слева (светлая)
-        fill(matrixStack, x, y, x + 1, y + height, 0x70FFFFFF);
-        // Граница снизу (тёмная)
-        fill(matrixStack, x, y + height - 1, x + width, y + height, 0x50000000);
-        // Граница справа (тёмная)
-        fill(matrixStack, x + width - 1, y, x + width, y + height, 0x50000000);
+        AbstractGui.fill(matrixStack, x, y, x + width, y + height, backgroundColor);
+        AbstractGui.fill(matrixStack, x, y, x + width, y + 1, 0x70FFFFFF);
+        AbstractGui.fill(matrixStack, x, y, x + 1, y + height, 0x70FFFFFF);
+        AbstractGui.fill(matrixStack, x, y + height - 1, x + width, y + height, 0x50000000);
+        AbstractGui.fill(matrixStack, x + width - 1, y, x + width, y + height, 0x50000000);
     }
     
-    /**
-     * Рисует рамку вокруг области
-     */
-    private void drawBorder(MatrixStack matrixStack, int x, int y, 
-                            int width, int height, int color) {
-        fill(matrixStack, x, y, x + width, y + 1, color);
-        fill(matrixStack, x, y + height - 1, x + width, y + height, color);
-        fill(matrixStack, x, y, x + 1, y + height, color);
-        fill(matrixStack, x + width - 1, y, x + width, y + height, color);
+    private void drawBorder(MatrixStack matrixStack, int x, int y, int width, int height, int color) {
+        AbstractGui.fill(matrixStack, x, y, x + width, y + 1, color);
+        AbstractGui.fill(matrixStack, x, y + height - 1, x + width, y + height, color);
+        AbstractGui.fill(matrixStack, x, y, x + 1, y + height, color);
+        AbstractGui.fill(matrixStack, x + width - 1, y, x + width, y + height, color);
     }
     
     @Override
@@ -203,7 +167,6 @@ public class MythicalEquipmentScreen extends Screen {
             this.minecraft.setScreen(null);
             return true;
         }
-        
         if (currentTab != null) {
             if (currentTab.keyPressed(keyCode, scanCode, modifiers)) {
                 return true;
@@ -213,12 +176,7 @@ public class MythicalEquipmentScreen extends Screen {
     }
     
     @Override
-    public boolean shouldCloseOnEsc() {
-        return true;
-    }
-    
+    public boolean shouldCloseOnEsc() { return true; }
     @Override
-    public boolean isPauseScreen() {
-        return false;
-    }
+    public boolean isPauseScreen() { return false; }
 }
