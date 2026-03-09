@@ -1,33 +1,43 @@
 package com.vs.vscombo.client.util;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.play.client.CChatMessagePacket;
 
 public class VSMainWindow {
     
     /**
-     * ✅ Очистка чата (аналог F3+D) — универсальный метод
+     * ✅ Очистка чата (аналог F3+D) — для официальных маппингов Mojang 1.16.5
      * Вызов: VSMainWindow.clearChatStatic();
      */
     public static void clearChatStatic() {
-        Minecraft mc = Minecraft.getInstance();
-        
-        if (mc == null || mc.player == null || mc.player.connection == null) {
-            return;
-        }
-        
         try {
-            // Отправляем команду очистки чата
-            // Многие сервера поддерживают /clearchat или /clear
-            mc.player.connection.send(new CChatMessagePacket("/clearchat"));
+            Minecraft mc = Minecraft.getInstance();
+            if (mc == null) return;
+            
+            // ✅ Mojang Mappings 1.16.5: прямой доступ к полям
+            // mc.gui -> ChatGui -> clearMessages(true)
+            if (mc.gui != null && mc.gui.chat != null) {
+                mc.gui.chat.clearMessages(true);
+            }
         } catch (Exception e) {
+            // Фолбэк через рефлексию (на случай обфускации)
             try {
-                // Альтернативная команда
-                mc.player.connection.send(new CChatMessagePacket("/clear"));
+                java.lang.reflect.Field guiField = Minecraft.class.getDeclaredField("gui");
+                guiField.setAccessible(true);
+                Object gui = guiField.get(Minecraft.getInstance());
+                
+                if (gui != null) {
+                    java.lang.reflect.Field chatField = gui.getClass().getDeclaredField("chat");
+                    chatField.setAccessible(true);
+                    Object chat = chatField.get(gui);
+                    
+                    if (chat != null) {
+                        java.lang.reflect.Method clearMethod = chat.getClass().getMethod("clearMessages", boolean.class);
+                        clearMethod.invoke(chat, true);
+                    }
+                }
             } catch (Exception e2) {
-                // Если команды не работают, пробуем отправить пустое сообщение
-                // Это не очистит чат, но хотя бы не вызовет ошибку
-                System.out.println("[Macros] Chat clear commands not supported on this server");
+                // Не удалось очистить чат
+                System.out.println("[Macros] Could not clear chat: " + e2.getMessage());
             }
         }
     }
